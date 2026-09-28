@@ -1,0 +1,19 @@
+{
+  "name": "zkl-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "张坤龙（Zhangkunlong）的个人主页与博客，部署于 zkl-ai.top",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/rss": "^4.0.12",
+    "@astrojs/sitemap": "^3.3.0",
+    "astro": "^5.7.0"
+  }
+}

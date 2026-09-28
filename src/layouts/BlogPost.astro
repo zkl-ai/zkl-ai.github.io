@@ -1,0 +1,32 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  pubDate: Date;
+  updatedDate?: Date;
+}
+
+const { title, description, pubDate, updatedDate } = Astro.props;
+
+function formatDate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+---
+
+<Base title={title} description={description}>
+  <article class="article">
+    <a class="back-link" href="/blog">&larr; 返回博客</a>
+    <header>
+      <h1>{title}</h1>
+      <div class="article-meta">
+        <span>发布于 {formatDate(pubDate)}</span>
+        {updatedDate && <span>更新于 {formatDate(updatedDate)}</span>}
+      </div>
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</Base>

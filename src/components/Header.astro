@@ -1,0 +1,30 @@
+---
+interface Props {
+  /** 当前页面路径，用于高亮导航 */
+  path?: string;
+}
+
+const { path = '' } = Astro.props;
+
+const links = [
+  { href: '/#about', label: '关于' },
+  { href: '/#focus', label: '方向' },
+  { href: '/#skills', label: '技能' },
+  { href: '/#publications', label: '论文' },
+  { href: '/#competitions', label: '竞赛' },
+  { href: '/blog', label: '博客' },
+];
+---
+
+<header class="site-header">
+  <div class="container">
+    <a class="brand" href="/">张坤龙<span style="font-family:var(--font-mono);font-weight:400;color:var(--text-faint)"> / ZKL</span></a>
+    <nav class="site-nav">
+      {
+        links.map((l) => (
+          <a href={l.href} class={path === l.href ? 'active' : undefined}>{l.label}</a>
+        ))
+      }
+    </nav>
+  </div>
+</header>

@@ -1,0 +1,232 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <p class="eyebrow">Zhangkunlong · zkl-ai</p>
+      <h1>
+        张坤龙
+      </h1>
+      <p class="role">
+        多模态大模型推理加速工程师
+        <span class="sep">/</span>
+        AI Agent 工程师
+      </p>
+      <p class="tagline">
+        专注于 Qwen-VL 系列多模态大模型与 Diffusion 模型的推理加速，同时构建面向智能标注场景的
+        AI Agent。vLLM 社区贡献者，Kaggler。
+      </p>
+      <div class="hero-links">
+        <a class="btn btn-primary" href="https://github.com/zkl-ai" target="_blank" rel="noopener">
+          GitHub
+        </a>
+        <a class="btn btn-ghost" href="mailto:zhangkl2023@mail.sustech.edu.cn">
+          联系我
+        </a>
+        <a class="btn btn-ghost" href="/blog">
+          阅读博客
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 关于我 -->
+  <section class="section" id="about">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">01</span>
+        <h2 class="section-title">关于我</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="card">
+        <p>
+          我是张坤龙，一名多模态大模型推理加速与 AI Agent 方向的工程师。目前主要做两件事：一是
+          <strong>Qwen-VL 系列多模态大模型的推理加速</strong>，也涉及 Diffusion 模型的推理加速；
+          二是构建<strong>面向智能标注场景的 AI Agent</strong>。
+        </p>
+        <p style="margin-top:12px">
+          我毕业于<a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">南方科技大学</a>
+          （本科：计算机科学与技术，硕士：电子科学与技术）。在 vLLM 社区提交过若干 PR 贡献，发表过
+          面向边缘设备的硬件感知 DNN 压缩方向论文，并在 Kaggle 竞赛中多次获奖。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 研究方向 -->
+  <section class="section" id="focus">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">02</span>
+        <h2 class="section-title">工作方向</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <p class="meta">Inference Acceleration</p>
+          <h3>多模态大模型推理加速</h3>
+          <p>
+            聚焦 Qwen-VL 系列视觉语言模型的推理优化，以及 Diffusion 模型的推理加速；
+            涉及模型压缩、算子优化与推理框架（vLLM）的工程落地。
+          </p>
+        </div>
+        <div class="card">
+          <p class="meta">AI Agent</p>
+          <h3>智能标注 Agent</h3>
+          <p>
+            构建面向智能标注场景的 LLM Agent，覆盖标注流程自动化、智能体编排与评测，
+            用大模型能力提升数据标注的效率与质量。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 技能 -->
+  <section class="section" id="skills">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">03</span>
+        <h2 class="section-title">技能</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="card">
+        <div class="skill-group">
+          <h4>大模型推理加速</h4>
+          <div class="tag-list">
+            <span class="tag accent">vLLM</span>
+            <span class="tag">模型量化 / 压缩</span>
+            <span class="tag">算子优化</span>
+            <span class="tag">CUDA</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <h4>多模态 & 生成式模型</h4>
+          <div class="tag-list">
+            <span class="tag accent">Qwen-VL</span>
+            <span class="tag">视觉语言模型</span>
+            <span class="tag">Diffusion</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <h4>AI Agent</h4>
+          <div class="tag-list">
+            <span class="tag accent">LLM 应用开发</span>
+            <span class="tag">智能体编排</span>
+            <span class="tag">Prompt 工程</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <h4>编程语言 & 工具</h4>
+          <div class="tag-list">
+            <span class="tag">Python</span>
+            <span class="tag">C++</span>
+            <span class="tag">PyTorch</span>
+            <span class="tag">Hugging Face</span>
+            <span class="tag">Git</span>
+            <span class="tag">Linux</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 论文 -->
+  <section class="section" id="publications">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">04</span>
+        <h2 class="section-title">论文</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="entry-list">
+        <div class="entry">
+          <div class="entry-title">Hardware-aware DNN Compression for Homogeneous Edge Devices</div>
+          <div class="entry-desc">
+            Zhang K, Li G, Lu N, et al. — 2025 7th International Conference on Data-driven
+            Optimization of Complex Systems (DOCS), IEEE, 2025, pp. 387–392.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 竞赛 -->
+  <section class="section" id="competitions">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">05</span>
+        <h2 class="section-title">竞赛</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="entry-list">
+        <div class="entry">
+          <span class="entry-badge">Kaggle · 银牌</span>
+          <div class="entry-title">
+            <a href="https://www.kaggle.com/competitions/optiver-trading-at-the-close" target="_blank" rel="noopener">
+              Optiver - Trading at the Close
+            </a>
+          </div>
+          <div class="entry-desc">排名 205 / 4436</div>
+        </div>
+        <div class="entry">
+          <span class="entry-badge">Kaggle · 铜牌</span>
+          <div class="entry-title">
+            <a href="https://www.kaggle.com/competitions/lmsys-chatbot-arena" target="_blank" rel="noopener">
+              LMSYS - Chatbot Arena Human Preference Predictions
+            </a>
+          </div>
+          <div class="entry-desc">排名 164 / 1849</div>
+        </div>
+        <div class="entry">
+          <span class="entry-badge">成果展示</span>
+          <div class="entry-title">
+            <a href="https://cse.sustech.edu.cn/graduate/1760.html" target="_blank" rel="noopener">
+              南方科技大学 · 研究生成果展示
+            </a>
+          </div>
+          <div class="entry-desc">计算机科学与工程系研究生成果展示页面</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 教育背景 -->
+  <section class="section" id="education">
+    <div class="container">
+      <div class="section-head">
+        <span class="index">06</span>
+        <h2 class="section-title">教育背景</h2>
+        <span class="rule"></span>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <p class="meta">硕士</p>
+          <h3>南方科技大学</h3>
+          <p>电子科学与技术</p>
+        </div>
+        <div class="card">
+          <p class="meta">本科</p>
+          <h3>南方科技大学</h3>
+          <p>计算机科学与技术</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 博客 CTA -->
+  <section class="section">
+    <div class="container">
+      <div class="blog-cta">
+        <div>
+          <h2>想看看我最近在做什么？</h2>
+          <p>记录大模型推理加速、AI Agent 与工程实践中的思考。</p>
+        </div>
+        <a class="btn btn-primary" href="/blog">进入博客 &rarr;</a>
+      </div>
+    </div>
+  </section>
+</Base>
