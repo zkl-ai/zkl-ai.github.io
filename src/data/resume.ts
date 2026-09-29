@@ -83,7 +83,7 @@ const zh: ResumeData = {
     title: '关于我',
     paragraphs: [
       '我是张坤龙，一名专注 <strong>AI 系统工程落地</strong> 的工程师，现居上海，目前在美团从事 <strong>多模态大模型推理加速</strong> 与 <strong>AI Agent</strong> 相关工作。',
-      '我毕业于<a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">南方科技大学</a>（本科：计算机科学与技术，硕士：电子科学与技术）。在 vLLM 社区提交过若干 PR 贡献，发表过面向边缘设备的硬件感知 DNN 压缩方向论文（获 Best Poster 最佳海报奖），并在天池、Kaggle 等竞赛中多次获奖。',
+      '我毕业于<a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">南方科技大学</a>（本科：计算机科学与技术，硕士：电子科学与技术）。在 vLLM 社区提交过若干 Pull Request 贡献，发表过面向边缘设备的硬件感知 DNN 压缩方向论文（获 Best Poster 最佳海报奖），并在天池、Kaggle 等竞赛中多次获奖。',
     ],
   },
   experience: {
@@ -92,12 +92,12 @@ const zh: ResumeData = {
       {
         badge: '2026.07 - 至今',
         title: '美团 · 多模态大模型推理加速 & 多模态长程 AI Agent 降本增效',
-        desc: '负责多模态大模型（Qwen-VL 系列）的推理加速，以及多模态长程 AI Agent 的降本增效与工程落地。',
+        desc: '负责 Qwen3-VL / Qwen3.5 等后续多模态大模型的推理加速，以及多模态长程 AI Agent 的降本增效与工程落地。',
       },
       {
         badge: '2025.04 - 2025.09',
         title: '美团 · 多模态大模型推理加速（实习）',
-        desc: '参与多模态大模型推理加速相关工作。',
+        desc: '参与 Qwen2.5-VL 多模态大模型的推理加速相关工作。',
       },
     ],
   },
@@ -113,15 +113,15 @@ const zh: ResumeData = {
     groups: [
       {
         name: '大模型推理加速',
-        tags: ['vLLM', 'SGLang', '模型量化（GPTQ / SpineQuant 等）', 'Vision Token Compression', 'SpecDecode（投机解码）'],
+        tags: ['vLLM', 'SGLang', '模型量化（GPTQ / SpineQuant）', '视觉 Token 压缩（Vision Token Compression）', '投机解码（Speculative Decoding）'],
       },
       {
-        name: 'Agent 优化方向',
-        tags: ['RSI（自进化 Agent）', '记忆进化（Experience Memory）', 'Skill 进化（Skill Bank）', 'Context / Harness 优化', '长程任务编排'],
+        name: 'AI Agent 优化方向',
+        tags: ['自进化智能体（Recursive Self-Improvement）', '记忆进化（Experience Memory）', '技能进化（Skill Bank）', '上下文 / Harness 优化', '长程任务编排（Long-horizon）'],
       },
       {
-        name: '多模态 & 生成式模型',
-        tags: ['Qwen-VL', '视觉语言模型', 'Diffusion'],
+        name: '多模态模型',
+        tags: ['Qwen3-VL / Qwen3.5', '视觉语言模型（Vision-Language Model）'],
       },
       {
         name: '编程语言 & 工具',
@@ -204,7 +204,7 @@ const en: ResumeData = {
     title: 'About Me',
     paragraphs: [
       'I am Zhangkunlong, an engineer focused on <strong>shipping AI systems to production</strong>, based in Shanghai. I currently work at Meituan on <strong>multimodal LLM inference acceleration</strong> and <strong>AI Agent</strong> systems.',
-      'I graduated from <a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">Southern University of Science and Technology</a> (B.Eng. in Computer Science and Technology, M.Eng. in Electronic Science and Technology). I have contributed PRs to the vLLM community, published a paper on hardware-aware DNN compression for edge devices (Best Poster Award), and won several competitions on Tianchi and Kaggle.',
+      'I graduated from <a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">Southern University of Science and Technology</a> (B.Eng. in Computer Science and Technology, M.Eng. in Electronic Science and Technology). I have contributed pull requests to the vLLM community, published a paper on hardware-aware DNN compression for edge devices (Best Poster Award), and won several competitions on Tianchi and Kaggle.',
     ],
   },
   experience: {
@@ -213,12 +213,12 @@ const en: ResumeData = {
       {
         badge: '2026.07 - Present',
         title: 'Meituan · Multimodal LLM Inference Acceleration & Long-horizon AI Agent',
-        desc: 'Inference acceleration for multimodal LLMs (Qwen-VL series); cost reduction and efficiency optimization of long-horizon AI Agents.',
+        desc: 'Inference acceleration for Qwen3-VL / Qwen3.5 and later multimodal LLMs; cost reduction and efficiency optimization of long-horizon AI Agents.',
       },
       {
         badge: '2025.04 - 2025.09',
         title: 'Meituan · Multimodal LLM Inference Acceleration (Intern)',
-        desc: 'Contributed to multimodal LLM inference acceleration.',
+        desc: 'Contributed to inference acceleration for the Qwen2.5-VL multimodal model.',
       },
     ],
   },
@@ -246,11 +246,11 @@ const en: ResumeData = {
       },
       {
         name: 'AI Agent Optimization',
-        tags: ['RSI (Self-Evolving Agent)', 'Memory Evolution (Experience Memory)', 'Skill Evolution (Skill Bank)', 'Context / Harness Optimization', 'Long-horizon Orchestration'],
+        tags: ['Recursive Self-Improvement (Self-Evolving Agent)', 'Memory Evolution (Experience Memory)', 'Skill Evolution (Skill Bank)', 'Context / Harness Optimization', 'Long-horizon Orchestration'],
       },
       {
-        name: 'Multimodal & Generative Models',
-        tags: ['Qwen-VL', 'Vision-Language Models', 'Diffusion'],
+        name: 'Multimodal Models',
+        tags: ['Qwen3-VL / Qwen3.5', 'Vision-Language Models'],
       },
       {
         name: 'Languages & Tools',
