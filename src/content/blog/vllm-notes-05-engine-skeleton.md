@@ -1,4 +1,11 @@
-# 第 1 章：从一段代码到引擎骨架
+---
+title: "vLLM 学习笔记（5）：引擎骨架与源码地图"
+description: "vLLM 0.30.0 的分层结构、请求状态机，以及各组件对应的源码位置。"
+pubDate: 2026-10-05
+tags: ["vLLM", "推理加速", "源码笔记"]
+category: inference-acceleration
+draft: true
+---
 
 先放一段能跑的最简代码：
 

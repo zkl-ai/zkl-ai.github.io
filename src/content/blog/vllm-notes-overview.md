@@ -1,6 +1,12 @@
-# vLLM 0.30.0 学习笔记
+---
+title: "vLLM 学习笔记（总纲）"
+description: "以 vLLM 0.30.0 源码为基线，从最简的离线例子出发，逐步搭建 vLLM 的知识体系。"
+pubDate: 2026-09-29
+tags: ["vLLM", "推理加速", "源码笔记"]
+category: inference-acceleration
+---
 
-这是一份边读源码边记的笔记。材料是 vLLM 0.30.0 的源码（在 `../sources/vllm-0.30.0/`，被 gitignore）、PagedAttention 那篇论文，以及 vLLM 官方那篇 [Anatomy of vLLM](https://vllm.ai/blog/2025-09-05-anatomy-of-vllm)。
+这是一份边读源码边记的笔记。材料是 [vLLM 0.30.0 的源码](https://github.com/vllm-project/vllm/tree/v0.30.0)、PagedAttention 那篇论文，以及 vLLM 官方那篇 [Anatomy of vLLM](https://vllm.ai/blog/2025-09-05-anatomy-of-vllm)。
 
 写法上参考 Anatomy 的思路：从一个最简单的例子出发，先把骨架看清楚，再一层层加复杂度，不追求一次讲全。重点是别一上来就扎进细节里，那样容易没头绪。
 
@@ -8,7 +14,7 @@
 
 ## 环境说明
 
-这台 M4 Pro 上装不了，查过了：vLLM 0.30.0 和 SGLang 0.5.20 在 PyPI 上都只有 manylinux 的 wheel，没有 macOS 版本；从源码编译在 Apple Silicon 上也不现实。要动手跑，得有一台 Linux + NVIDIA GPU 的机器（云 GPU 或者公司机器）。
+vLLM 0.30.0 在 PyPI 上只有 manylinux 的 wheel，没有 macOS 版本；在 Apple Silicon 上从源码编译也不现实。所以想动手跑，得有一台 Linux + NVIDIA GPU 的机器（云 GPU 或者公司机器）。
 
 所以现阶段以读源码、建立概念为主，动手环节留到有 GPU 环境时再补。
 
@@ -16,14 +22,14 @@
 
 **第一篇 · 宏观（先把直觉建立起来）**
 
-1. [最小的离线示例](01-最小的离线示例.md) —— 一次生成到底发生了什么
+1. [最小的离线示例](/blog/vllm-notes-01-minimal-offline/) —— 一次生成到底发生了什么
 2. 从单请求到批处理 —— 为什么 GPU 不能一个一个来
 3. 调度器 —— 谁先跑、显存不够怎么办
 4. PagedAttention —— 显存怎么分页管
 
 **第二篇 · 深入源码**
 
-5. [引擎骨架与源码地图](05-引擎骨架与源码地图.md) —— 分层结构、请求状态机
+5. 引擎骨架与源码地图 —— 分层结构、请求状态机
 6. 引擎初始化 —— KV block 的数量是怎么算出来的
 7. 前向传播 —— 扁平序列 + paged kernel
 

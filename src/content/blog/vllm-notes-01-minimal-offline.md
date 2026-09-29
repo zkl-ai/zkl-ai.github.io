@@ -1,4 +1,10 @@
-# 第 1 章：最小的离线示例
+---
+title: "vLLM 学习笔记（1）：最小的离线示例"
+description: "从一段最简的离线推理代码出发，讲清一次生成到底发生了什么：prefill、decode 和 KV cache。"
+pubDate: 2026-09-29
+tags: ["vLLM", "推理加速", "源码笔记"]
+category: inference-acceleration
+---
 
 这一章不碰源码，也不看任何类的层次。目标只有一个：**把"给一个 prompt、让它生成一段话"这件事，从概念上想清楚。**
 
@@ -78,7 +84,7 @@ vLLM 对这两个问题的回答，就是它出名的两个机制。下一节先
 
 把上面那张表画成图：
 
-![图 1.1：一次生成的全过程，prefill 一次吃 3 个 token，之后每步只吃 1 个](images/fig-1-1-prefill-decode.svg)
+![图 1.1：一次生成的全过程，prefill 一次吃 3 个 token，之后每步只吃 1 个](/images/vllm/fig-1-1-prefill-decode.svg)
 
 四行分别是 prefill 和三次 decode。每行左边是这一步的输入——绿色是这次真正喂进去的 token，斜线的是从 KV cache 读出来的历史；蓝色是这一步产出的 token；右边是这步之后 KV cache 里的内容。
 
@@ -86,8 +92,6 @@ vLLM 对这两个问题的回答，就是它出名的两个机制。下一节先
 
 - **输入**：prefill 一次吃 A B C 三个 token；之后每一步的"新输入"只有一个（D、E、F），其余都从缓存来。
 - **KV cache**：每一行末尾都比上一行多一格。decode 能只算 1 个新 token，靠的就是它；否则每步都要把 A~F 全部重算。
-
-（Excalidraw 源文件放在 `images/fig-1-1-prefill-decode.excalidraw`，以后要改直接打开。）
 
 ## 本章想让你记住的
 
