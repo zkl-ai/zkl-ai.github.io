@@ -1,140 +1,157 @@
 ---
 title: "vLLM 核心机制：Continuous Batching 与 PagedAttention"
-description: "吃透 vLLM 的调度与显存管理，建立推理加速基线。"
+description: "从一段最简的 vLLM 代码出发，沿着引擎的调用链路拆解连续批处理、分页注意力与调度器。"
 pubDate: 2026-10-18
 tags: ["成长计划", "推理加速", "vLLM"]
 draft: true
 category: inference-acceleration
 ---
 
-> 本文是「多模态大模型推理加速」方向的第一篇：把 vLLM 的两大核心机制——Continuous Batching 和 PagedAttention——从原理讲到源码，最后落到一份可复用的推理基线报告。
+> 这篇文章想回答一个朴素的问题：**为什么同样一张 GPU，用 vLLM 跑大模型，吞吐能比 HuggingFace Transformers 高出一个数量级？**
+>
+> 答案是它做对了两件看似不相关、其实缺一不可的事：用 **Continuous Batching** 解决「算力利用率」，用 **PagedAttention** 解决「显存利用率」。本文沿着 vLLM 引擎的真实调用链路，把这两件事拆开讲。
 
-## 学习目标
+## 从一个最简例子开始
 
-读完并做完实验后，应该能回答这几个问题：
+```python
+from vllm import LLM, SamplingParams
 
-1. 为什么用 HuggingFace Transformers 直接推理，吞吐会这么低？卡点在哪？
-2. Continuous Batching 相比静态批处理，到底解决了什么问题？
-3. PagedAttention 的「分页」思想是怎么来的？它如何解决 KV cache 的碎片化和共享问题？
-4. vLLM 的调度器每步在做什么？preemption（抢占）有哪两种方式？
-5. 能独立压测出一个 Qwen3-VL 服务的 P50/P99 延迟、吞吐和显存基线。
+prompts = ["介绍一下你自己", "今天天气怎么样"]
+sampling_params = SamplingParams(temperature=0.7, max_tokens=128)
 
-## 背景：两个「历史包袱」
-
-### 1. KV cache 是显存的主要占用
-
-自回归生成时，第 t 个 token 的 attention 要看到前面所有 token。如果每步都重算，复杂度是 O(n²)；所以把每层的 Key/Value 缓存下来，生成第 t 个 token 时只算新 token 的 KV 并 append。
-
-KV cache 的显存量级：
-
-```
-KV cache ≈ 2 × num_layers × hidden_size × seq_len × batch × dtype
+llm = LLM(model="Qwen/Qwen3-VL-8B-Instruct")
+outputs = llm.generate(prompts, sampling_params)
 ```
 
-长序列 + 大 batch 时，KV cache 会远远超过模型权重本身，成为显存瓶颈。**推理服务要解决的核心问题，本质上是「如何高效管理这块 KV cache 内存」。**
+就这么几行。但 `LLM(...)` 构造和 `generate(...)` 这两次调用背后，是一整套为「高吞吐」设计的引擎。我们先建立一个心智模型，再往下钻。
 
-### 2. 传统静态批处理浪费算力
+## 心智模型：引擎的三个层次
 
-Transformers 的 `generate` 是「一个请求一个 batch」，多个请求只能排队串行；而早期的静态批处理是「一批请求一起进来，等最慢的那个生成完，整批才结束」——木桶效应，GPU 大量时间在空转。
+vLLM 的核心可以抽象成三个层次：
 
-## 核心机制一：Continuous Batching（连续批处理）
+- **LLM Engine**：对外接口。离线场景就是上面的 `LLM`，在线场景是 `AsyncLLMEngine`（配合 FastAPI 暴露成 OpenAI 兼容接口）。
+- **Engine Core**：真正干活的循环。它内部有三样东西——**Scheduler**（决定每步跑哪些请求）、**Model Executor**（驱动模型前向）、**KV Cache Manager**（管理显存，PagedAttention 的心脏）。
+- **请求**：一条请求从进来到离开，状态在 `WAITING → RUNNING → FINISHED` 之间流转。
 
-Continuous Batching 把调度粒度从「请求级别」细化到「token 级别」：
-
-- 每个 step 生成一个 token 后，**立即**把已完成的请求移出，把新请求加入
-- 不再等整批结束，GPU 每一步都尽量跑满
-
-效果：吞吐量相比静态批处理通常提升一个数量级。这是现在几乎所有推理框架（vLLM / SGLang / TensorRT-LLM）的标配。
-
-> 关键理解：Continuous Batching 解决的是「**算力利用率**」问题；而下面 PagedAttention 解决的是「**显存利用率**」问题。两者独立，但配合起来才构成 vLLM 的高吞吐。
-
-## 核心机制二：PagedAttention（分页注意力）
-
-### 问题：连续分配的 KV cache 有三个毛病
-
-传统做法是给每个序列预留一块**连续**的显存放 KV cache，导致：
-
-1. **碎片化**：不同序列长度不同，释放后留下大小不一的空洞，新的序列塞不进去
-2. **过度预留**：不知道序列会生成多长，只能按 `max_len` 预留，大量浪费
-3. **无法共享**：并行采样 / beam search 会共享相同前缀，但连续分配没法让多个序列复用同一段 KV
-
-### 解法：借鉴操作系统的虚拟内存分页
-
-PagedAttention 把 KV cache 切成**固定大小的 block**（默认 16 个 token 一块），每个序列通过一张 **block table** 记录它用到哪些 block。物理上不连续，逻辑上连续。
-
-带来的好处：
-
-- **几乎消除碎片**：block 大小统一，随时能复用
-- **按需分配**：用到多少分多少，不再按 `max_len` 预留
-- **KV cache 共享**：并行采样、beam search 可以共享公共前缀的 block，显存省一大截
-
-> 参考：vLLM 论文《Efficient Memory Management for Large Language Model Serving with PagedAttention》（SOSP 2023）。这篇论文是理解 PagedAttention 的第一手材料。
-
-## 核心机制三：调度器（Scheduler）
-
-调度器每步决定「哪些序列参与这次 forward」。序列大致有这几个状态：
-
-- **WAITING**：已排队，还没进显存
-- **RUNNING**：正在生成
-- **SWAPPED**：被抢占，KV cache 换到了 CPU 内存
-- **FINISHED**：完成
-
-显存不够时，调度器会**抢占（preemption）**一部分序列，两种方式：
-
-- **Swap**：把 KV cache 换到 CPU 内存，省显存但恢复慢
-- **Recompute**：直接丢弃 KV，恢复时重算，快但费算力
-
-另外还有 **chunked prefill**：把很长的 prompt 切块处理，避免 prefill 阶段显存峰值过高、也降低首 token 延迟。
-
-## 一个请求的生命周期
+一个请求的完整生命周期可以概括为：
 
 ```
-Tokenizer → Engine/Scheduler（WAITING → RUNNING）
-          → Model Runner（prefill / decode）
-          → Sampler（greedy / beam / sampling）
-          → 命中 EOS 或 max_tokens → FINISHED
+Tokenizer → Scheduler（WAITING → RUNNING）→ 前向传播 → 采样 → 命中 EOS 或 max_tokens → FINISHED
 ```
 
-> 建议自己画一张带 block table 的链路图，画完才算真正理解了。
+## 引擎初始化：`LLM(...)` 构造时发生了什么
 
-## 源码 / 实验
+构造 `LLM` 时，最关键的几件事：
 
-### 读源码（重点文件）
+1. **加载模型**：实例化模型结构、加载权重、`model.eval()`。
+2. **初始化 KV Cache**：跑一次 dummy 前向，算清楚「扣除权重后还剩多少显存」，再除以每个 block 的大小，得到总共能分多少个 KV block。这些 block 统一装进一个叫 `free_block_queue` 的空闲池里。
+3. **捕获 CUDA Graph**：decode 阶段每一步的算子序列是固定的，vLLM 会预先「录制」成 CUDA Graph，之后每步直接重放，省掉海量的 kernel 启动开销。
 
-- `vllm/core/scheduler.py`：调度逻辑，continuous batching + preemption 都在这里
-- `vllm/attention/`：PagedAttention 的实现
-- `vllm/worker/`：模型前向执行的 worker
-- `vllm/engine/`：请求入口，LLM / AsyncLLM 的封装
+这里有一个概念要提前记住：**KV block**。PagedAttention 把 KV cache 切成固定大小的块，默认 **16 个 token 一块**。一个标准 attention 层的 block 显存是：
 
-### 动手实验
+```
+2（K/V）× block_size(16) × num_kv_heads × head_size × dtype字节数
+```
 
-- [ ] 用 vLLM 起一个 Qwen3-VL 服务（`vllm serve`）
-- [ ] 写一个压测脚本，固定 prompt 长度，测不同并发下的吞吐和延迟
-- [ ] 用 `vllm` 自带的指标 / 或 `nvtop` 观察显存占用
-- [ ] （TODO）记录你的具体命令和观测到的现象
+整个引擎的显存管理，就是围绕「怎么分配、复用、回收这些 block」展开的。
 
-## 可量化成果
+## Continuous Batching：调度粒度从「请求」细化到「token」
 
-填一张基线报告，作为后续所有优化的对比基准：
+### 老问题：静态批处理的木桶效应
 
-| 指标 | 数值（TODO 填） |
-|------|----------------|
-| 模型 | Qwen3-VL-xxB |
-| 硬件 | TODO（如 A100 / H800） |
-| 最大并发 | TODO |
-| P50 延迟 | TODO |
-| P99 延迟 | TODO |
-| 吞吐（token/s） | TODO |
-| 显存占用 | TODO |
+早期的批处理是把一批请求一起塞进模型，**等最慢的那个生成完，整批才算结束**。这就像等一桌人里吃得最慢的人吃完才上下一道菜——GPU 大量时间在空转。
 
-> 这一步的基线很重要：后面做量化、投机解码、Visual Token Compression 时，都要拿它做 before/after 对比。
+### vLLM 的做法：每一步都可以换人
 
-## 踩坑记录
+vLLM 的引擎是一个 `step()` 循环，每步只做三件事：
 
-- [ ] （TODO）记录你遇到的第一个坑，例如 `max_model_len` 设太大导致 OOM、`num_gpu_blocks` 相关报错、vLLM 版本与模型不兼容等
+1. **Schedule**：从 `running` 和 `waiting` 队列里挑出这一步要跑的请求
+2. **Forward**：跑一次模型前向，每个请求采样一个 token
+3. **Postprocess**：把 token 拼回序列，检查是否命中停止条件
+
+关键在于：**每生成一个 token，就可以把已完成的请求移走、把新请求加进来**。不再有「整批必须一起结束」的约束，GPU 每一步都被尽量填满。
+
+> 顺带厘清两个术语：**prefill** 是对整段 prompt 做前向（计算密集，compute-bound）；**decode** 是只对最新一个 token 做前向（读显存为主，memory-bandwidth-bound）。Continuous Batching 的意义主要在于把大量「单 token」的 decode 请求高效地打包在一起。
+
+### 具体怎么实现的：把所有序列拼成一条「超长序列」
+
+这是 Continuous Batching 最巧的地方。vLLM 不把每个请求单独 padding 成一样长（那样浪费），而是把这一批所有请求的 token **首尾拼接成一条扁平序列**，交给自定义的 attention kernel 一次算完。靠的是两样东西：
+
+- `position_ids`：告诉 kernel 每个 token 在它自己序列里的位置
+- attention mask：保证每个 token **只看到自己序列里的前文**，不会跨序列「串味」
+
+所以从 kernel 的角度，它看到的永远是「一条序列 + 一张索引表」，天然支持任意数量的请求混在一起。
+
+## PagedAttention：给 KV cache 做「分页」
+
+Continuous Batching 解决算力，但显存问题还悬着。而显存的大头，是 KV cache。
+
+### 为什么 KV cache 是瓶颈
+
+自回归生成第 t 个 token 时，attention 要看前面所有 token 的 Key/Value。如果不缓存，每步都要重算全部历史，复杂度是 O(n²)。所以把每层的 K/V 存下来，第 t 步只算新 token 的 KV 再 append。
+
+代价是显存：KV cache 随「层数 × 序列长度 × batch」线性增长，长序列 + 大并发时，它会轻松超过模型权重本身。
+
+### 连续分配的三个毛病
+
+传统做法是给每个序列预留一段**连续**显存放 KV cache，这带来三个问题：
+
+1. **碎片化**：不同请求长度不同，释放后留下大小不一的空洞，新请求塞不进去
+2. **过度预留**：不知道会生成多长，只能按 `max_len` 预留，大半浪费
+3. **无法共享**：并行采样、beam search 共享同一个前缀，但连续分配没法让它们复用同一段 KV
+
+### 分页思想：block + block table
+
+PagedAttention 直接借用了操作系统的**虚拟内存分页**：
+
+- 把 KV cache 切成固定大小的 **block**（默认 16 token）
+- 每个序列用一张 **block table** 记录「我的第 i 个逻辑 block 存在哪个物理 block」
+- 物理上不连续，逻辑上连续
+
+调度器里那个 `free_block_queue`，就是一个装空闲 block 的池子。请求需要新 block 时从池子里取，用完还回池子。因为 block 大小统一，**几乎不再有碎片**；因为按需分配，**不再按 max_len 预留**；因为 block 可以被多个序列的 block table 同时引用，**KV cache 可以共享**（这是前缀缓存 prefix caching 的基础，留到下一篇讲）。
+
+> 读到这里你会发现，PagedAttention 和 Continuous Batching 其实是同一个东西的两面：**扁平序列 + 索引表**。扁平序列让算力能被塞满，索引表（block table / slot mapping）让显存能被高效管理。理解了这一层，vLLM 的核心就通了。
+
+## 调度器：每一步的「决策中枢」
+
+Scheduler 每步要回答「这一批跑谁、给多少 token 预算」。大致逻辑：
+
+1. **先照顾 decode**（已经在 `running` 的请求）：算它这一步要生成几个 token（投机解码时可能不止 1 个），调用 KV cache manager 分配 slot
+2. **再处理 prefill**（`waiting` 队列里的新请求）：分配 prompt 所需的 block，把请求从 `waiting` 挪到 `running`
+3. 每步有一个 **token budget**，超了就停止加人
+
+而 `allocate_slots` 内部做三件事：
+
+1. **算要几个 block**：比如 prefill 有 17 个新 token，`ceil(17/16) = 2` 个 block
+2. **查够不够**：池子里 block 不够时，触发**抢占（preemption）**——V1 里主要是 recompute（丢弃部分 KV，恢复时重算），V0 里还有 swap（KV 换到 CPU 内存）
+3. **分配**：从 `free_block_queue` 取 block，登记到 `req_to_blocks` 映射表
+
+调度策略上，V1 支持 **FCFS**（先来先服务）和 **priority**（高优先级先跑）。
+
+## 一次前向传播的内部
+
+调度器挑好人之后，前向传播大致分五步：
+
+1. **Update states**：清掉已完成的请求，更新 block table、采样元数据
+2. **Prepare inputs**：把 CPU 侧的 token/位置拷到 GPU，算出 `slot_mapping`（每个 token 对应写到哪个 KV slot）
+3. **Forward**：跑模型，attention 用自定义的 paged kernel，扁平序列 + 掩码一次算完
+4. **Gather last-token states**：只取每个序列最后一个位置的 hidden state，算 logits
+5. **Sample**：按采样参数（greedy / temperature / top-p / top-k）出 token
+
+如果是 decode 且没关 CUDA Graph，第 3 步就是「重放录制好的图」，这也是 decode 低延迟的关键之一。
+
+## 接下来可以深入的方向
+
+到这里，Continuous Batching 和 PagedAttention 的主干就通了。再往前，还有几个「长在这套机制上」的高级特性，正好对应这个系列后续的文章：
+
+- **Chunked prefill**：长 prompt 分块处理，避免单个长请求独占一步（对应「投机解码」之外的一篇）
+- **Prefix caching**：复用相同前缀的 KV，是 PagedAttention 共享能力的直接应用
+- **Speculative decoding**：小模型草稿 + 大模型校验，下一篇的主角
+- **Disaggregated P/D**：把 prefill 和 decode 拆到不同实例，各自扩缩容
 
 ## 参考资料
 
 - vLLM 论文：Efficient Memory Management for LLM Serving with PagedAttention（SOSP 2023）
-- vLLM 官方文档：docs.vllm.ai
-- 源码：github.com/vllm-project/vllm
+- vLLM Blog：Inside vLLM: Anatomy of a High-Throughput LLM Inference System
+- vLLM 官方文档：docs.vllm.ai（重点看 V1 engine 指南）
+- 源码：`vllm/core/scheduler.py`、`vllm/attention/`、`vllm/worker/`、`vllm/v1/`
