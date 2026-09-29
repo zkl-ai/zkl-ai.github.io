@@ -58,6 +58,8 @@ export interface ResumeData {
     blog: string;
   };
   footer: {
+    views: string;
+    visitors: string;
     blog: string;
     rss: string;
   };
@@ -176,6 +178,8 @@ const zh: ResumeData = {
     blog: '博客',
   },
   footer: {
+    views: '访问',
+    visitors: '访客',
     blog: '博客',
     rss: 'RSS',
   },
@@ -303,6 +307,8 @@ const en: ResumeData = {
     blog: 'Blog',
   },
   footer: {
+    views: 'Views',
+    visitors: 'Visitors',
     blog: 'Blog',
     rss: 'RSS',
   },

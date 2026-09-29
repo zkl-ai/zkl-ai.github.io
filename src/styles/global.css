@@ -484,6 +484,16 @@ img {
   color: var(--accent);
 }
 
+.site-footer .footer-sep {
+  margin: 0 8px;
+  color: var(--border);
+}
+
+.site-footer .counter-sep {
+  margin: 0 6px;
+  color: var(--border);
+}
+
 /* ---------- 博客列表 ---------- */
 .page-head {
   padding: 56px 0 8px;

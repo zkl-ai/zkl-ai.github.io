@@ -16,11 +16,32 @@ const name = lang === 'zh' ? '张坤龙 Zhangkunlong' : 'Zhangkunlong';
   <div class="container">
     <span>&copy; {year} {name} · <a href="https://zkl-ai.top">zkl-ai.top</a></span>
     <span>
+      <span id="busuanzi-counter" class="counter">
+        {d.footer.views} <span id="busuanzi_value_site_pv">--</span>
+        <span class="counter-sep">·</span>
+        {d.footer.visitors} <span id="busuanzi_value_site_uv">--</span>
+      </span>
+      <span class="footer-sep">·</span>
       <a href="https://github.com/zkl-ai" target="_blank" rel="noopener">GitHub</a>
-      <span style="margin:0 8px;color:var(--border)">·</span>
+      <span class="footer-sep">·</span>
       <a href="/blog">{d.footer.blog}</a>
-      <span style="margin:0 8px;color:var(--border)">·</span>
+      <span class="footer-sep">·</span>
       <a href="/rss.xml">{d.footer.rss}</a>
     </span>
   </div>
+  <script is:inline>
+    // 站长自排除：在自己浏览器控制台执行 localStorage.setItem('is_owner','1') 后，
+    // 该浏览器不再加载统计脚本（不计入访客）。
+    try {
+      if (localStorage.getItem('is_owner') === '1') {
+        var counter = document.getElementById('busuanzi-counter');
+        if (counter) counter.style.display = 'none';
+      } else {
+        var s = document.createElement('script');
+        s.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+        s.async = true;
+        document.head.appendChild(s);
+      }
+    } catch (e) {}
+  </script>
 </footer>
