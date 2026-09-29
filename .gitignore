@@ -14,3 +14,5 @@ pnpm-debug.log*
 .env.production
 # macOS
 .DS_Store
+# framework-study 参考源码（可随时重新抓取，不入库以保持仓库轻量）
+framework-study/sources/
