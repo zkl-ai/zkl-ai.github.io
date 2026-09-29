@@ -4,6 +4,7 @@ description: "6 个月成长计划第 9 篇：Skill Bank 与基于成败轨迹�
 pubDate: 2027-03-07
 tags: ["成长计划", "Agent"]
 draft: true
+category: agent-optimization
 ---
 
 > 本文是「6 个月成长计划」系列第 9 篇，属于「多模态长程 Agent 优化」方向。

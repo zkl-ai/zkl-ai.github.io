@@ -4,6 +4,7 @@ description: "6 个月成长计划第 2 篇：权重量化原理与工程实践�
 pubDate: 2026-11-08
 tags: ["成长计划", "推理加速", "量化"]
 draft: true
+category: inference-acceleration
 ---
 
 > 本文是「6 个月成长计划」系列第 2 篇，属于「多模态大模型推理加速」方向。

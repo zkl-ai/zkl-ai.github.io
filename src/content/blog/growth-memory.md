@@ -4,6 +4,7 @@ description: "6 个月成长计划第 8 篇：Experience Memory 的提取-检索
 pubDate: 2027-02-21
 tags: ["成长计划", "Agent"]
 draft: true
+category: agent-optimization
 ---
 
 > 本文是「6 个月成长计划」系列第 8 篇，属于「多模态长程 Agent 优化」方向。

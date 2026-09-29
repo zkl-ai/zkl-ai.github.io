@@ -4,6 +4,7 @@ description: "6 个月成长计划第 10 篇：Harness 代码进化与 Skill+工
 pubDate: 2027-03-21
 tags: ["成长计划", "Agent"]
 draft: true
+category: agent-optimization
 ---
 
 > 本文是「6 个月成长计划」系列第 10 篇，属于「多模态长程 Agent 优化」方向。

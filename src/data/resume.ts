@@ -116,7 +116,7 @@ const zh: ResumeData = {
         tags: ['vLLM', 'SGLang', '模型量化（GPTQ / SpineQuant）', '视觉 Token 压缩（Vision Token Compression）', '投机解码（Speculative Decoding）'],
       },
       {
-        name: 'AI Agent 优化方向',
+        name: '长程智能体优化',
         tags: ['自进化智能体（Recursive Self-Improvement）', '记忆进化（Experience Memory）', '技能进化（Skill Bank）', '上下文 / Harness 优化', '长程任务编排（Long-horizon）'],
       },
       {
@@ -245,7 +245,7 @@ const en: ResumeData = {
         tags: ['vLLM', 'SGLang', 'Model Quantization (GPTQ / SpineQuant)', 'Vision Token Compression', 'Speculative Decoding'],
       },
       {
-        name: 'AI Agent Optimization',
+        name: 'Long-horizon Agent Optimization',
         tags: ['Recursive Self-Improvement (Self-Evolving Agent)', 'Memory Evolution (Experience Memory)', 'Skill Evolution (Skill Bank)', 'Context / Harness Optimization', 'Long-horizon Orchestration'],
       },
       {

@@ -4,6 +4,7 @@ description: "6 个月成长计划第 1 篇：吃透 vLLM 的调度与显存管�
 pubDate: 2026-10-18
 tags: ["成长计划", "推理加速", "vLLM"]
 draft: true
+category: inference-acceleration
 ---
 
 > 本文是「6 个月成长计划」系列第 1 篇，属于「多模态大模型推理加速」方向。

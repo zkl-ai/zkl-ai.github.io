@@ -117,10 +117,15 @@ title: "文章标题"
 description: "一句话摘要，用于列表页和 SEO"
 pubDate: 2026-09-28
 tags: ["标签1", "标签2"]
+category: inference-acceleration
+draft: true
 ---
 
 正文（Markdown）……
 ```
+
+- `category`（可选）挂到对应专区，取值两个：`inference-acceleration`（多模态大模型推理加速）或 `agent-optimization`（多模态长程智能体优化）；不写则归入「全部文章」、不显示专区标签
+- `draft: true` 表示草稿（不发布），写完删掉这一行或改成 `false` 即发布
 
 推送到 GitHub 后自动发布。
 
