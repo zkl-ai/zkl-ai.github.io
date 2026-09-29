@@ -1,30 +1,41 @@
 ---
+import type { Lang } from '../data/resume';
+import { resume } from '../data/resume';
+
 interface Props {
-  /** 当前页面路径，用于高亮导航 */
-  path?: string;
+  lang?: Lang;
 }
 
-const { path = '' } = Astro.props;
+const { lang = 'zh' } = Astro.props;
+const d = resume[lang];
+const prefix = lang === 'zh' ? '' : '/en';
 
 const links = [
-  { href: '/#about', label: '关于' },
-  { href: '/#focus', label: '方向' },
-  { href: '/#skills', label: '技能' },
-  { href: '/#publications', label: '论文' },
-  { href: '/#competitions', label: '竞赛' },
-  { href: '/blog', label: '博客' },
+  { href: `${prefix}/#about`, label: d.nav.about },
+  { href: `${prefix}/#experience`, label: d.nav.experience },
+  { href: `${prefix}/#skills`, label: d.nav.skills },
+  { href: `${prefix}/#publications`, label: d.nav.publications },
+  { href: `${prefix}/#competitions`, label: d.nav.competitions },
+  { href: '/blog', label: d.nav.blog },
 ];
 ---
 
 <header class="site-header">
   <div class="container">
-    <a class="brand" href="/">张坤龙<span style="font-family:var(--font-mono);font-weight:400;color:var(--text-faint)"> / ZKL</span></a>
+    <a class="brand" href={lang === 'zh' ? '/' : '/en/'}>
+      {d.siteName}<span class="brand-sub"> / ZKL</span>
+    </a>
     <nav class="site-nav">
       {
         links.map((l) => (
-          <a href={l.href} class={path === l.href ? 'active' : undefined}>{l.label}</a>
+          <a href={l.href}>{l.label}</a>
         ))
       }
+      <span class="lang-switch">
+        <a href="/" class={lang === 'zh' ? 'active' : undefined}>中</a>
+        <span class="lang-sep">/</span>
+        <a href="/en/" class={lang === 'en' ? 'active' : undefined}>EN</a>
+      </span>
     </nav>
   </div>
 </header>

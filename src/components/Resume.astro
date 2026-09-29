@@ -1,0 +1,190 @@
+---
+import type { Lang } from '../data/resume';
+import { resume } from '../data/resume';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const d = resume[lang];
+---
+
+<!-- Hero -->
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-top">
+      <div class="avatar">ZKL</div>
+      <div>
+        <p class="eyebrow">{d.hero.eyebrow}</p>
+        <h1>{d.hero.name}</h1>
+      </div>
+    </div>
+    <p class="role">
+      {d.hero.roles[0]}
+      <span class="sep">/</span>
+      {d.hero.roles[1]}
+    </p>
+    <p class="tagline">{d.hero.tagline}</p>
+    <p class="location">{d.hero.location}</p>
+    <div class="hero-links">
+      <a class="btn btn-primary" href="https://github.com/zkl-ai" target="_blank" rel="noopener">
+        {d.hero.github}
+      </a>
+      <a class="btn btn-ghost" href="mailto:zhangkl2023@mail.sustech.edu.cn">
+        {d.hero.contact}
+      </a>
+      <a class="btn btn-ghost" href="/blog">
+        {d.hero.blog}
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 关于我 -->
+<section class="section" id="about">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">01</span>
+      <h2 class="section-title">{d.about.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="card">
+      {d.about.paragraphs.map((p) => <p set:html={p} />)}
+    </div>
+  </div>
+</section>
+
+<!-- 工作经历 -->
+<section class="section" id="experience">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">02</span>
+      <h2 class="section-title">{d.experience.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="entry-list">
+      {
+        d.experience.items.map((item) => (
+          <div class="entry">
+            <span class="entry-badge">{item.badge}</span>
+            <div class="entry-title">{item.title}</div>
+            <div class="entry-desc">{item.desc}</div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 教育背景 -->
+<section class="section" id="education">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">03</span>
+      <h2 class="section-title">{d.education.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="cards">
+      {
+        d.education.items.map((item) => (
+          <div class="card">
+            <p class="meta">{item.meta}</p>
+            <h3>{item.school}</h3>
+            <p>{item.major}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 技能 -->
+<section class="section" id="skills">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">04</span>
+      <h2 class="section-title">{d.skills.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="card">
+      {
+        d.skills.groups.map((group) => (
+          <div class="skill-group">
+            <h4>{group.name}</h4>
+            <div class="tag-list">
+              {group.tags.map((tag, i) => (
+                <span class={i === 0 ? 'tag accent' : 'tag'}>{tag}</span>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 论文 -->
+<section class="section" id="publications">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">05</span>
+      <h2 class="section-title">{d.publications.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="entry-list">
+      {
+        d.publications.items.map((item) => (
+          <div class="entry">
+            <span class="entry-badge">{item.badge}</span>
+            <div class="entry-title">
+              <a href={item.href} target="_blank" rel="noopener">
+                {item.title}
+              </a>
+            </div>
+            <div class="entry-desc">{item.authors}</div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 竞赛 -->
+<section class="section" id="competitions">
+  <div class="container">
+    <div class="section-head">
+      <span class="index">06</span>
+      <h2 class="section-title">{d.competitions.title}</h2>
+      <span class="rule"></span>
+    </div>
+    <div class="entry-list">
+      {
+        d.competitions.items.map((item) => (
+          <div class="entry">
+            <span class="entry-badge">{item.badge}</span>
+            <div class="entry-title">
+              <a href={item.href} target="_blank" rel="noopener">
+                {item.title}
+              </a>
+            </div>
+            <div class="entry-desc">{item.desc}</div>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- 博客 CTA -->
+<section class="section">
+  <div class="container">
+    <div class="blog-cta">
+      <div>
+        <h2>{d.blogCta.title}</h2>
+        <p>{d.blogCta.desc}</p>
+      </div>
+      <a class="btn btn-primary" href="/blog">{d.blogCta.button} &rarr;</a>
+    </div>
+  </div>
+</section>

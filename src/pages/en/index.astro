@@ -1,0 +1,11 @@
+---
+import Base from '../../layouts/Base.astro';
+import Resume from '../../components/Resume.astro';
+import { resume } from '../../data/resume';
+
+const d = resume.en;
+---
+
+<Base lang="en" description={d.metaDescription}>
+  <Resume lang="en" />
+</Base>

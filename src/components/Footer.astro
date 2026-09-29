@@ -1,16 +1,26 @@
 ---
+import type { Lang } from '../data/resume';
+import { resume } from '../data/resume';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'zh' } = Astro.props;
+const d = resume[lang];
 const year = new Date().getFullYear();
+const name = lang === 'zh' ? '张坤龙 Zhangkunlong' : 'Zhangkunlong';
 ---
 
 <footer class="site-footer">
   <div class="container">
-    <span>&copy; {year} 张坤龙 Zhangkunlong · <a href="https://zkl-ai.top">zkl-ai.top</a></span>
+    <span>&copy; {year} {name} · <a href="https://zkl-ai.top">zkl-ai.top</a></span>
     <span>
       <a href="https://github.com/zkl-ai" target="_blank" rel="noopener">GitHub</a>
       <span style="margin:0 8px;color:var(--border)">·</span>
-      <a href="/blog">博客</a>
+      <a href="/blog">{d.footer.blog}</a>
       <span style="margin:0 8px;color:var(--border)">·</span>
-      <a href="/rss.xml">RSS</a>
+      <a href="/rss.xml">{d.footer.rss}</a>
     </span>
   </div>
 </footer>
