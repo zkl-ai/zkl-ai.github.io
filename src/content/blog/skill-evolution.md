@@ -2,7 +2,7 @@
 title: "Skill 进化：从 Skill Bank 到自进化技能"
 description: "Skill Bank 与基于成败轨迹的技能演化。"
 pubDate: 2027-03-07
-tags: ["成长计划", "Agent"]
+tags: ["成长计划", "智能体优化"]
 draft: true
 category: agent-optimization
 ---

@@ -1,0 +1,75 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getCategory } from '../../../data/categories';
+import { PAGE_SIZE, getPublishedPosts } from '../../../lib/posts';
+
+export async function getStaticPaths() {
+  const allPosts = await getPublishedPosts();
+  const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
+  const paths = [];
+  for (let i = 2; i <= totalPages; i++) {
+    paths.push({ params: { page: String(i) } });
+  }
+  return paths;
+}
+
+const { page } = Astro.params;
+const pageNum = Number(page);
+
+const allPosts = await getPublishedPosts();
+const posts = allPosts.slice((pageNum - 1) * PAGE_SIZE, pageNum * PAGE_SIZE);
+const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
+
+function formatDate(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+---
+
+<Base title={`博客 · 第 ${pageNum} 页`} description="张坤龙的博客 —— 模型推理加速与长程智能体优化。">
+  <div class="container">
+    <div class="page-head">
+      <a class="back-link" href="/blog">&larr; 第一页</a>
+      <h1>博客</h1>
+      <p>第 {pageNum} 页</p>
+    </div>
+
+    <div class="post-list">
+      {
+        posts.map((post) => (
+          <div class="post-item">
+            <a class="post-title" href={`/blog/${post.id}/`}>{post.data.title}</a>
+            <div class="post-desc">{post.data.description}</div>
+            <div class="post-meta">
+              {post.data.category && (
+                <a class="post-category" href={`/blog/${post.data.category}/`}>
+                  {getCategory(post.data.category)?.name.zh}
+                </a>
+              )}
+              <span>{formatDate(post.data.pubDate)}</span>
+              {post.data.tags?.map((t) => <a class="post-tag" href={`/blog/tag/${t}/`}>#{t}</a>)}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+
+    <!-- 分页 -->
+    {
+      totalPages > 1 && (
+        <nav class="pagination">
+          {pageNum > 2 ? (
+            <a class="page-link" href={`/blog/page/${pageNum - 1}/`}>&larr; 上一页</a>
+          ) : (
+            <a class="page-link" href="/blog/">&larr; 上一页</a>
+          )}
+          <span class="page-info">{pageNum} / {totalPages}</span>
+          {pageNum < totalPages ? (
+            <a class="page-link" href={`/blog/page/${pageNum + 1}/`}>下一页 &rarr;</a>
+          ) : (
+            <span class="page-link disabled">下一页 &rarr;</span>
+          )}
+        </nav>
+      )
+    }
+  </div>
+</Base>

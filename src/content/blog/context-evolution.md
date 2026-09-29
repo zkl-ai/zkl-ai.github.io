@@ -2,7 +2,7 @@
 title: "上下文进化：长程任务的上下文组织"
 description: "长程任务的上下文压缩与持久化工作台。"
 pubDate: 2027-02-07
-tags: ["成长计划", "Agent"]
+tags: ["成长计划", "智能体优化"]
 draft: true
 category: agent-optimization
 ---

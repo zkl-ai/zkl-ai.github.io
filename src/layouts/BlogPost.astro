@@ -1,14 +1,17 @@
 ---
 import Base from './Base.astro';
+import { getCategory } from '../data/categories';
 
 interface Props {
   title: string;
   description: string;
   pubDate: Date;
   updatedDate?: Date;
+  category?: string;
+  tags?: string[];
 }
 
-const { title, description, pubDate, updatedDate } = Astro.props;
+const { title, description, pubDate, updatedDate, category, tags } = Astro.props;
 
 function formatDate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -21,8 +24,10 @@ function formatDate(d: Date) {
     <header>
       <h1>{title}</h1>
       <div class="article-meta">
-        <span>发布于 {formatDate(pubDate)}</span>
+        <span>{formatDate(pubDate)}</span>
         {updatedDate && <span>更新于 {formatDate(updatedDate)}</span>}
+        {category && <a href={`/blog/${category}/`}>{getCategory(category)?.name.zh}</a>}
+        {tags?.map((t) => <a href={`/blog/tag/${t}/`}>#{t}</a>)}
       </div>
     </header>
     <div class="prose">

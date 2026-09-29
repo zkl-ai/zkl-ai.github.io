@@ -532,6 +532,7 @@ img {
 }
 
 .post-item .post-title {
+  display: block;
   font-size: 16.5px;
   font-weight: 700;
   color: var(--text);
@@ -561,9 +562,49 @@ img {
   color: var(--accent);
 }
 
+.post-item .post-tag:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
 .post-item .post-category {
   color: var(--accent-strong);
   font-weight: 600;
+}
+
+.post-item .post-category:hover {
+  text-decoration: underline;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.pagination .page-link {
+  font-size: 14px;
+  color: var(--accent);
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pagination .page-link:hover {
+  background: var(--accent-soft);
+}
+
+.pagination .page-link.disabled {
+  color: var(--text-faint);
+  pointer-events: none;
+}
+
+.pagination .page-info {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
 }
 
 .category-grid {

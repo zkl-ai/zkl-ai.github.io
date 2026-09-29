@@ -1,19 +1,22 @@
 ---
 import { getCollection } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import { categories, getCategory } from '../../data/categories';
+import Base from '../../../layouts/Base.astro';
+import { getCategory } from '../../../data/categories';
 
 export async function getStaticPaths() {
-  return categories.map((c) => ({
-    params: { category: c.slug },
-    props: { category: c },
-  }));
+  const posts = await getCollection('blog');
+  const tags = new Set<string>();
+  for (const p of posts) {
+    if (p.data.draft) continue;
+    for (const t of p.data.tags ?? []) tags.add(t);
+  }
+  return [...tags].map((tag) => ({ params: { tag }, props: { tag } }));
 }
 
-const { category } = Astro.props;
+const { tag } = Astro.props;
 
 const posts = (await getCollection('blog'))
-  .filter((p) => !p.data.draft && p.data.category === category.slug)
+  .filter((p) => !p.data.draft && (p.data.tags ?? []).includes(tag))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 function formatDate(d: Date) {
@@ -21,12 +24,12 @@ function formatDate(d: Date) {
 }
 ---
 
-<Base title={category.name.zh} description={category.description.zh}>
+<Base title={`标签 #${tag}`} description={`标签「${tag}」下的所有文章。`}>
   <div class="container">
     <div class="page-head">
       <a class="back-link" href="/blog">&larr; 全部文章</a>
-      <h1>{category.name.zh}</h1>
-      <p>{category.description.zh}</p>
+      <h1>#{tag}</h1>
+      <p>共 {posts.length} 篇文章</p>
     </div>
 
     <div class="post-list">
@@ -36,6 +39,11 @@ function formatDate(d: Date) {
             <a class="post-title" href={`/blog/${post.id}/`}>{post.data.title}</a>
             <div class="post-desc">{post.data.description}</div>
             <div class="post-meta">
+              {post.data.category && (
+                <a class="post-category" href={`/blog/${post.data.category}/`}>
+                  {getCategory(post.data.category)?.name.zh}
+                </a>
+              )}
               <span>{formatDate(post.data.pubDate)}</span>
               {post.data.tags?.map((t) => <a class="post-tag" href={`/blog/tag/${t}/`}>#{t}</a>)}
             </div>
@@ -43,7 +51,7 @@ function formatDate(d: Date) {
         ))
       }
       {
-        posts.length === 0 && <p style="color:var(--text-muted)">这个专区还没有文章，敬请期待。</p>
+        posts.length === 0 && <p style="color:var(--text-muted)">这个标签下还没有文章。</p>
       }
     </div>
   </div>

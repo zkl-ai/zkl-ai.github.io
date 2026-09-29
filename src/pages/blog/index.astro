@@ -1,11 +1,11 @@
 ---
-import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { categories, getCategory } from '../../data/categories';
+import { PAGE_SIZE, getPublishedPosts } from '../../lib/posts';
 
-const posts = (await getCollection('blog'))
-  .filter((p) => !p.data.draft)
-  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+const allPosts = await getPublishedPosts();
+const totalPages = Math.ceil(allPosts.length / PAGE_SIZE);
+const posts = allPosts.slice(0, PAGE_SIZE);
 
 function formatDate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -34,22 +34,35 @@ function formatDate(d: Date) {
     <div class="post-list">
       {
         posts.map((post) => (
-          <a class="post-item" href={`/blog/${post.id}/`}>
-            <div class="post-title">{post.data.title}</div>
+          <div class="post-item">
+            <a class="post-title" href={`/blog/${post.id}/`}>{post.data.title}</a>
             <div class="post-desc">{post.data.description}</div>
             <div class="post-meta">
               {post.data.category && (
-                <span class="post-category">{getCategory(post.data.category)?.name.zh}</span>
+                <a class="post-category" href={`/blog/${post.data.category}/`}>
+                  {getCategory(post.data.category)?.name.zh}
+                </a>
               )}
               <span>{formatDate(post.data.pubDate)}</span>
-              {post.data.tags?.map((t) => <span class="post-tag">#{t}</span>)}
+              {post.data.tags?.map((t) => <a class="post-tag" href={`/blog/tag/${t}/`}>#{t}</a>)}
             </div>
-          </a>
+          </div>
         ))
       }
       {
         posts.length === 0 && <p style="color:var(--text-muted)">还没有文章，敬请期待。</p>
       }
     </div>
+
+    <!-- 分页 -->
+    {
+      totalPages > 1 && (
+        <nav class="pagination">
+          <span class="page-link disabled">&larr; 上一页</span>
+          <span class="page-info">1 / {totalPages}</span>
+          <a class="page-link" href="/blog/page/2/">下一页 &rarr;</a>
+        </nav>
+      )
+    }
   </div>
 </Base>

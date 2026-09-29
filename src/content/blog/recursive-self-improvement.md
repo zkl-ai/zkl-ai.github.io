@@ -2,7 +2,7 @@
 title: "自进化智能体（Recursive Self-Improvement）：一个分类坐标系"
 description: "建立 RSI 分类框架，能快速判断新工作属于哪一类。"
 pubDate: 2027-01-17
-tags: ["成长计划", "Agent", "RSI"]
+tags: ["成长计划", "智能体优化", "自进化智能体"]
 draft: true
 category: agent-optimization
 ---
