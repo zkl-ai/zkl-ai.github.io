@@ -17,6 +17,7 @@ export interface ResumeData {
     location: string;
     github: string;
     contact: string;
+    email: string;
     blog: string;
   };
   about: {
@@ -77,6 +78,7 @@ const zh: ResumeData = {
     location: '📍 上海',
     github: 'GitHub',
     contact: '联系我',
+    email: '907668776@qq.com',
     blog: '阅读博客',
   },
   about: {
@@ -198,6 +200,7 @@ const en: ResumeData = {
     location: '📍 Shanghai, China',
     github: 'GitHub',
     contact: 'Contact',
+    email: '907668776@qq.com',
     blog: 'Blog',
   },
   about: {
