@@ -1,13 +1,12 @@
 ---
-title: "【成长计划】模型量化：GPTQ 与 SpineQuant"
-description: "6 个月成长计划第 2 篇：权重量化原理与工程实践，量化前后的精度/显存/延迟对比。"
+title: "模型量化：GPTQ 与 SpineQuant"
+description: "权重量化原理与工程实践，量化前后的精度/显存/延迟对比。"
 pubDate: 2026-11-08
 tags: ["成长计划", "推理加速", "量化"]
 draft: true
 category: inference-acceleration
 ---
 
-> 本文是「6 个月成长计划」系列第 2 篇，属于「多模态大模型推理加速」方向。
 
 ## 学习目标
 - （TODO）权重量化 vs 激活量化；GPTQ 逐层误差补偿；SpineQuant 思路

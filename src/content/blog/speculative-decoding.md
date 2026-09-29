@@ -1,13 +1,12 @@
 ---
-title: "【成长计划】投机解码（Speculative Decoding）"
-description: "6 个月成长计划第 3 篇：draft-then-verify 机制与多模态长序列场景的加速效果。"
+title: "投机解码（Speculative Decoding）"
+description: "draft-then-verify 机制与多模态长序列场景的加速效果。"
 pubDate: 2026-11-29
 tags: ["成长计划", "推理加速"]
 draft: true
 category: inference-acceleration
 ---
 
-> 本文是「6 个月成长计划」系列第 3 篇，属于「多模态大模型推理加速」方向。
 
 ## 学习目标
 - （TODO）draft-then-verify 原理、加速条件、长输出场景表现

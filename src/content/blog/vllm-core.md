@@ -1,13 +1,12 @@
 ---
-title: "【成长计划】vLLM 核心机制：Continuous Batching 与 PagedAttention"
-description: "6 个月成长计划第 1 篇：吃透 vLLM 的调度与显存管理，建立推理加速基线。"
+title: "vLLM 核心机制：Continuous Batching 与 PagedAttention"
+description: "吃透 vLLM 的调度与显存管理，建立推理加速基线。"
 pubDate: 2026-10-18
 tags: ["成长计划", "推理加速", "vLLM"]
 draft: true
 category: inference-acceleration
 ---
 
-> 本文是「6 个月成长计划」系列第 1 篇，属于「多模态大模型推理加速」方向。
 
 ## 学习目标
 - （TODO）搞懂 continuous batching、PagedAttention、KV cache 管理、调度器
