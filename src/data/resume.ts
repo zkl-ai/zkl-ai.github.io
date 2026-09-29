@@ -73,7 +73,7 @@ const zh: ResumeData = {
     eyebrow: 'Zhangkunlong · zkl-ai',
     name: '张坤龙',
     roles: ['多模态大模型推理加速工程师', 'AI Agent 工程师'],
-    tagline: '专注 AI 系统工程落地的工程师：让大模型推理更快更省，把 AI Agent 真正跑进生产。',
+    tagline: '专注 AI 工程：模型推理加速 + 长程智能体优化，让大模型更快、更省。',
     location: '📍 上海',
     github: 'GitHub',
     contact: '联系我',
@@ -82,7 +82,7 @@ const zh: ResumeData = {
   about: {
     title: '关于我',
     paragraphs: [
-      '我是张坤龙，一名专注 <strong>AI 系统工程落地</strong> 的工程师，现居上海，目前在美团从事 <strong>多模态大模型推理加速</strong> 与 <strong>AI Agent</strong> 相关工作。',
+      '我是张坤龙，一名专注 <strong>AI 工程落地</strong> 的工程师，现居上海，目前在美团从事 <strong>多模态大模型推理加速</strong> 与 <strong>长程智能体优化</strong> 相关工作。',
       '我毕业于<a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">南方科技大学</a>（本科：计算机科学与技术，硕士：电子科学与技术）。在 vLLM 社区提交过若干 Pull Request 贡献，发表过面向边缘设备的硬件感知 DNN 压缩方向论文（获 Best Poster 最佳海报奖），并在天池、Kaggle 等竞赛中多次获奖。',
     ],
   },
@@ -194,7 +194,7 @@ const en: ResumeData = {
     name: 'Zhangkunlong',
     roles: ['Multimodal LLM Inference Engineer', 'AI Agent Engineer'],
     tagline:
-      'Engineer focused on shipping AI systems to production — making LLM inference faster and cheaper, and putting AI Agents into real workloads.',
+      'Focused on AI engineering: model inference acceleration + long-horizon agent optimization — making LLMs faster and cheaper.',
     location: '📍 Shanghai, China',
     github: 'GitHub',
     contact: 'Contact',
@@ -203,7 +203,7 @@ const en: ResumeData = {
   about: {
     title: 'About Me',
     paragraphs: [
-      'I am Zhangkunlong, an engineer focused on <strong>shipping AI systems to production</strong>, based in Shanghai. I currently work at Meituan on <strong>multimodal LLM inference acceleration</strong> and <strong>AI Agent</strong> systems.',
+      'I am Zhangkunlong, an engineer focused on <strong>shipping AI systems to production</strong>, based in Shanghai. I currently work at Meituan on <strong>multimodal LLM inference acceleration</strong> and <strong>long-horizon AI Agent optimization</strong>.',
       'I graduated from <a href="https://www.sustech.edu.cn" target="_blank" rel="noopener">Southern University of Science and Technology</a> (B.Eng. in Computer Science and Technology, M.Eng. in Electronic Science and Technology). I have contributed pull requests to the vLLM community, published a paper on hardware-aware DNN compression for edge devices (Best Poster Award), and won several competitions on Tianchi and Kaggle.',
     ],
   },
