@@ -9,6 +9,7 @@
     "start": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test:counter": "npm run build && node scripts/test-footer-counter.mjs dist/index.html",
     "astro": "astro"
   },
   "dependencies": {

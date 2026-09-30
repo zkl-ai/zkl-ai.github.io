@@ -148,21 +148,86 @@ draft: true
 3. ~~竞赛第 3 条~~ ✅ 已确认并修正为「AFAC2023 金融智能挑战赛 · 季军」（基金趋势模拟预测赛题，813 支队伍）。
 4. **个人头像**：目前没有头像图，如需可在 `public/` 放一张并引用。
 
-## 访客统计（不蒜子）
+## 访客统计
 
-页脚通过[不蒜子](https://busuanzi.ibruce.info)显示「访问量 / 访客数」，免费、无需注册。
+页脚计数由 `src/data/analytics.ts` 一处配置控制（改完重新部署即可），加载逻辑在 `src/components/Footer.astro`。
 
-**排除自己的访问**：在你自己的浏览器控制台（F12 → Console）执行一次：
+### ⚠️ 不蒜子的数字是虚高的
 
-```js
-localStorage.setItem('is_owner', '1')
+默认仍在用[不蒜子](https://busuanzi.ibruce.info)，它的 UV **只认一个第三方 cookie**（`busuanziId`，写在 `busuanzi.ibruce.info` 域下）：
+
+- 同一浏览器**换设备 / 换浏览器 / 换浏览器配置文件**都算一个新访客；
+- iPhone 和 iPad 上的 Safari（默认拦截第三方 cookie）、Chrome 无痕、Brave、Firefox 增强保护等下，**每刷新一页就 +1 个访客**；
+- 它不认 IP、不做时间去重、不过滤爬虫。
+
+2026-09-30 实测：无 cookie 连续请求同一站点，`site_uv` 从 437 → 438 → 439（同一 IP、同一秒各算一个）；带上同一个 `busuanziId` cookie 后 `site_uv` 不再增长。所以「23 位访客」≈「23 个还没被拦掉的 cookie」，不等于 23 个人。
+
+### 排除自己的访问（推荐 `?me=1`）
+
+在任意设备/浏览器上访问一次：
+
+```
+https://zkl-ai.top/?me=1
 ```
 
-之后该浏览器不再计数、页脚计数也会隐藏。换设备或清空缓存后需重新执行；清除标记用：
+该浏览器就永久不再计数，页脚计数也会隐藏（`me` 参数会自动从地址栏抹掉，方便收藏干净链接）。取消：
 
-```js
-localStorage.removeItem('is_owner')
 ```
+https://zkl-ai.top/?me=0
+```
+
+- 标记存在 localStorage + sessionStorage，按「协议 + 域名」分开存：`http://zkl-ai.top` 和 `https://zkl-ai.top` **要各设一次**。
+- 无痕窗口的标记只在本次会话有效，下次开无痕要再访问一次 `?me=1`。
+- 老写法 `localStorage.setItem('is_owner','1')` 依然有效。
+
+### 换成 GoatCounter（推荐，数字才接近「人」）
+
+[GoatCounter](https://www.goatcounter.com) 对个人用途免费，**完全不用 cookie**：服务端按「IP + User-Agent」在 8 小时会话内去重，凡声明自己是爬虫的请求直接忽略。刷新页面、翻页都不会再涨访客数。
+
+1. 到 https://www.goatcounter.com 注册，站点码取 `zkl-ai`（决定统计地址 `https://<站点码>.goatcounter.com`）。
+2. 编辑 `src/data/analytics.ts`：
+
+   ```ts
+   provider: 'goatcounter',
+   goatcounterCode: 'zkl-ai',
+   ```
+
+3. GoatCounter 后台打开 **Settings → Allow adding visitor counts on your website**，页脚才会显示总数（该接口最多缓存 4 小时）。
+4. 建议再在 **Settings → Tracking → Ignore IPs** 里填上你常用的出口 IP：家里/公司的所有设备一次性全部排除，比逐台 `?me=1` 彻底。
+
+已知偏差：广告拦截插件会拦掉 GoatCounter 约 1/3 的请求，所以它的数字偏小而不是偏大；爬虫不计数。
+
+### 其他可选项
+
+- `provider: 'cloudflare'` + 填 `cloudflareToken`：用 Cloudflare Web Analytics。需要先把 `zkl-ai.top` 的 DNS 迁到 Cloudflare 并开启代理；它没有公开计数接口，页脚不显示数字，只能去 Cloudflare 后台看。
+- `provider: 'none'`：不加载任何统计脚本，页脚也不显示计数。
+
+### 回归测试
+
+```bash
+npm run test:counter
+```
+
+先 build，再用一个最小 DOM stub 跑 `dist/index.html` 里真实生成的页脚脚本，覆盖 11 个用例（各 provider、`?me=1` / `?me=0`、无痕、storage 被禁等）。
+
+## 已知问题：HTTPS 证书不匹配（待修）
+
+2026-09-30 检查发现：`https://zkl-ai.top` 返回的证书是 GitHub 的 `CN=*.github.io`，与域名不匹配，浏览器会直接报「您的连接不是私密连接」（`ERR_CERT_COMMON_NAME_INVALID`）；而 `http://zkl-ai.top` 能正常打开（200）且**不会**跳转到 https。也就是说，现在直接在浏览器里输 `zkl-ai.top` 的真人访客大部分会被证书警告挡走。
+
+DNS 本身没问题（阿里云 NS，4 条 A 记录指向 GitHub Pages，无 AAAA / CAA 记录），是 GitHub Pages 那边还没给这个自定义域名签下证书。
+
+修法：
+
+1. 仓库 **Settings → Pages → Custom domain** 重新填一次 `zkl-ai.top` 并 **Save**（触发 Let's Encrypt 重新签发）。
+2. 等 15 分钟到几小时，用下面命令确认证书里的 `subject` 变成 `CN=zkl-ai.top`：
+
+   ```bash
+   curl -sv https://zkl-ai.top/ 2>&1 | grep 'subject:'
+   ```
+
+3. 证书就绪后勾上 **Enforce HTTPS**。
+
+> 注意：https 修好后，`http://` 和 `https://` 是两个不同的源，`?me=1` 的自排除标记要在 https 下重新设一次。
 
 ## 常见问题（本地环境）
 

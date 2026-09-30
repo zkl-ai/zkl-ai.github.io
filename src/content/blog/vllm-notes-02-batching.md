@@ -29,16 +29,19 @@ prompt3    I  J  _  _  _      补 3 个 pad
 
 顺着这个思路还能想通一件事：为什么注意力和矩阵乘不能一视同仁地批处理。矩阵乘、FFN 这类算子对每条序列的计算完全独立，拼成大矩阵一起算就行；而注意力要求每条序列只能在**自己**的 token 范围内做点积，长度不一样就不好拼。Orca 那篇论文里专门给这个现象起了个名字叫 **selective batching**——只对"能批"的那部分算子做批处理，注意力另行处理。
 
-vLLM 干脆连 padding 都不做。它把这一步要算的所有 token 首尾相接排成一条扁平序列，另外给一个数组记每条序列的起点：
+vLLM 干脆连 padding 都不做。它把这一步要算的所有 token 首尾相接排成一条扁平序列，另外给一个数组 `query_start_loc` 记每条序列的起点。还是刚才那三条长度 3、5、2 的 prompt：
 
 ```text
-token 数组    A B C D E F G H I J
-query_start_loc   0     3     8  10
-                  ↑     ↑     ↑
-               prompt1 prompt2 prompt3
+A  B  C  D  E  F  G  H  I  J
+0  1  2  3  4  5  6  7  8  9
+└───────┘└─────────────┘└────┘
+0        3              8   10
+prompt1  prompt2        prompt3
 ```
 
-`query_start_loc` 在 `worker_gpu_model_runner.py:2080` 附近被填好，GPU 上按这些边界把扁平序列切开。细节留到第 7 章，这里先记结论：**padding 是可以绕开的，不是必须付的代价**。
+`query_start_loc = [0, 3, 8, 10]` 有 4 个数，但只有 3 条序列——**最后那个 10 不是谁的起点，是总长度**，也就是第 3 条序列的终点。这么存的好处是任意一条序列占多少 token 一减就出来：$3-0=3$、$8-3=5$、$10-8=2$，和三条 prompt 的长度正好对上。
+
+这个数组在 `worker_gpu_model_runner.py:2080` 附近被填好（源码里就是把各序列长度累加起来，再在末尾补一个总数），GPU 上按这些边界把扁平序列切开。细节留到第 7 章，这里先记结论：**padding 是可以绕开的，不是必须付的代价**。
 
 ## 静态批处理：一批一起开始，一起结束
 
@@ -101,7 +104,7 @@ A 在第 2 步结束时腾出槽位，D 第 3 步就进来了；B 第 3 步腾�
 
 所以连续批处理不是"多了一个 batch 的开关"，而是**换人这件事从批的边界挪到了步的边界**。vLLM 采纳了这个思路，它自己的贡献在另外一半（显存），上一章说过。
 
-## 但它不是银弹
+## 但它并不能填满所有空档
 
 上面那个例子里连续批处理能赢，靠的是一个前提：**有人在排队**。
 
@@ -133,7 +136,13 @@ A 在第 2 步结束时腾出槽位，D 第 3 步就进来了；B 第 3 步腾�
 
 调度器里没有"decode 阶段"也没有"prefill 阶段"。每个请求身上只有两个数：已经算了多少 token、一共需要算多少 token。每一步调度器做的事，就是给请求分一点 token 配额，让前者追上后者。这正是连续批处理的思路——**不按阶段想问题，只按步想问题**。
 
+这两个变量名值得单独记一下，因为它们和"阶段"是一回事的两面说法。`num_computed_tokens` 是"这个请求已经算过多少 token"；`num_tokens_with_spec` 是"它一共有多少 token"——prompt 加已生成的部分，再加上投机解码草拟出来、还没验证的那些。`request.py:292` 的定义就是 `len(self._all_token_ids) + len(self.spec_token_ids)`，名字里的 `spec` 是 speculative 的缩写。两者之差，就是这一步还欠它多少 token。
+
 `schedule()` 内部的顺序也照着这个来。先是第 610 行一句 `# First, schedule the RUNNING requests.`，把已经在跑的请求续上；接着是第 854 行 `# Next, schedule the WAITING requests.`，再回头看排队的能不能补进空出来的位置。请求跑完之后由 `_free_request`（第 2561 行）收尾，KV cache 的块跟着回收，下一次 `schedule()` 就能把这些位置分给别人。
+
+V0 不是这样的。那一版的序列上挂着一个显式的 `SequenceStage`（`PREFILL` / `DECODE`），调度器也按这个划分出两套策略：默认那条 `_schedule_default()` 的文档写的是"先尽量把 prefill 塞满，再排 decode"，要混批得打开 `enable_chunked_prefill` 走另一条路径 `_schedule_chunked_prefill()`。
+
+V1 把两条路合成了一条。官方的说法是它 "removes the traditional distinction between 'prefill' and 'decode' phases"，不再区分用户给的 prompt token 和模型生成的 output token。理由是 V0 那些特性各自独立开发，难组合（"Features were often developed independently, making it difficult to combine them effectively and cleanly"）；而 `{request_id: num_tokens}` 这种统一表示恰好能同时表达 chunked prefill、prefix caching 和投机解码。于是 V1 干脆把混批变成默认行为——V0 里 `enable_chunked_prefill` 默认是关的（只有上下文超过 32K 的模型会自动打开），V1 则直接写死 `self.enable_chunked_prefill = True`，注释只有一句 `# V1 always uses chunked prefills.`。
 
 不过这里冒出一个新问题：一个新请求要进场，得先做 prefill；而这一步里同时还有别的请求在做 decode。prefill 是计算密集，decode 是访存密集，硬塞进同一个 step 会互相拖累。这件事留到第 9 章讲 chunked prefill 时再说。
 
@@ -145,7 +154,9 @@ A 在第 2 步结束时腾出槽位，D 第 3 步就进来了；B 第 3 步腾�
 
 ## 参考资料
 
-- vLLM 0.30.0 源码：`vllm/v1/core/sched/scheduler.py`、`vllm/v1/worker/gpu_model_runner.py`
+- vLLM 0.30.0 源码：`vllm/v1/core/sched/scheduler.py`、`vllm/v1/worker/gpu_model_runner.py`、`vllm/v1/request.py`
+- 对照 V0 用的源码（v0.9.0 这个 tag）：`vllm/core/scheduler.py`、`vllm/sequence.py`、`vllm/engine/arg_utils.py`
+- vLLM Team, [vLLM V1: A Major Upgrade to vLLM's Core Architecture](https://vllm.ai/blog/2025-01-27-v1-alpha-release)，2025-01-27
 - Yu et al., [Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu)，OSDI '22
 - Aleksa Gordić, [Inside vLLM: Anatomy of a High-Throughput LLM Inference System](https://vllm.ai/blog/2025-09-05-anatomy-of-vllm)，2025-09-05
 - Kwon et al., Efficient Memory Management for LLM Serving with PagedAttention，SOSP 2023

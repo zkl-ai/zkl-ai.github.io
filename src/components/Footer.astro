@@ -1,6 +1,7 @@
 ---
 import type { Lang } from '../data/resume';
 import { resume } from '../data/resume';
+import { analytics } from '../data/analytics';
 
 interface Props {
   lang?: Lang;
@@ -10,18 +11,34 @@ const { lang = 'zh' } = Astro.props;
 const d = resume[lang];
 const year = new Date().getFullYear();
 const name = lang === 'zh' ? '张坤龙 Zhangkunlong' : 'Zhangkunlong';
+
+const provider = analytics.provider;
+const gcCode = analytics.goatcounterCode.trim();
+const cfToken = analytics.cloudflareToken.trim();
+// 页脚是否显示计数：Cloudflare 没有公开计数接口，'none' 则完全不计。
+const showCounter = provider === 'goatcounter' ? gcCode !== '' : provider === 'busuanzi';
 ---
 
 <footer class="site-footer">
   <div class="container">
     <span>&copy; {year} {name} · <a href="https://zkl-ai.top">zkl-ai.top</a></span>
     <span>
-      <span id="busuanzi-counter" class="counter">
-        {d.footer.views} <span id="busuanzi_value_site_pv">--</span>
-        <span class="counter-sep">·</span>
-        {d.footer.visitors} <span id="busuanzi_value_site_uv">--</span>
-      </span>
-      <span class="footer-sep">·</span>
+      {
+        showCounter && (
+          <span class="counter">
+            {provider === 'goatcounter' ? (
+              <>{d.footer.views} <span id="gc-total">--</span></>
+            ) : (
+              <>
+                {d.footer.views} <span id="busuanzi_value_site_pv">--</span>
+                <span class="counter-sep">·</span>
+                {d.footer.visitors} <span id="busuanzi_value_site_uv">--</span>
+              </>
+            )}
+          </span>
+        )
+      }
+      {showCounter && <span class="footer-sep">·</span>}
       <a href="https://github.com/zkl-ai" target="_blank" rel="noopener">GitHub</a>
       <span class="footer-sep">·</span>
       <a href="/blog">{d.footer.blog}</a>
@@ -29,19 +46,92 @@ const name = lang === 'zh' ? '张坤龙 Zhangkunlong' : 'Zhangkunlong';
       <a href="/rss.xml">{d.footer.rss}</a>
     </span>
   </div>
-  <script is:inline>
-    // 站长自排除：在自己浏览器控制台执行 localStorage.setItem('is_owner','1') 后，
-    // 该浏览器不再加载统计脚本（不计入访客）。
-    try {
-      if (localStorage.getItem('is_owner') === '1') {
-        var counter = document.getElementById('busuanzi-counter');
-        if (counter) counter.style.display = 'none';
-      } else {
-        var s = document.createElement('script');
-        s.src = 'https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
-        s.async = true;
-        document.head.appendChild(s);
+  <script is:inline define:vars={{ provider, gcCode, cfToken }}>
+    (function () {
+      var KEY = 'is_owner';
+      var counter = document.querySelector('.site-footer .counter');
+
+      function readFlag() {
+        try {
+          return localStorage.getItem(KEY) === '1' || sessionStorage.getItem(KEY) === '1';
+        } catch (e) {
+          return false;
+        }
       }
-    } catch (e) {}
+
+      function writeFlag(on) {
+        try {
+          if (on) localStorage.setItem(KEY, '1');
+          else localStorage.removeItem(KEY);
+        } catch (e) {}
+        try {
+          if (on) sessionStorage.setItem(KEY, '1');
+          else sessionStorage.removeItem(KEY);
+        } catch (e) {}
+      }
+
+      // ---- 站长自排除 ----
+      // 访问 https://zkl-ai.top/?me=1 一次即可让「这个浏览器」永久不再计数；
+      // 访问 ?me=0 取消。参数会被从地址栏抹掉，方便收藏干净的链接。
+      // 无痕窗口里的标记只在本次会话有效，下次开无痕要再来一次 ?me=1。
+      // 注意：标记按「协议 + 域名」分开存，http:// 和 https:// 各要设一次。
+      try {
+        var params = new URLSearchParams(location.search);
+        if (params.has('me')) {
+          writeFlag(params.get('me') !== '0');
+          params.delete('me');
+          var qs = params.toString();
+          history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+        }
+      } catch (e) {}
+
+      if (readFlag()) {
+        // 已排除：不加载任何统计脚本，页脚计数也藏起来。
+        if (counter) counter.style.display = 'none';
+        return;
+      }
+
+      function addScript(src, attrs) {
+        var s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        for (var k in attrs) s.setAttribute(k, attrs[k]);
+        document.head.appendChild(s);
+        return s;
+      }
+
+      if (provider === 'busuanzi') {
+        addScript('https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js');
+        return;
+      }
+
+      if (provider === 'goatcounter') {
+        if (!gcCode) return;
+        var base = 'https://' + gcCode + '.goatcounter.com';
+        addScript('https://gc.zgo.at/count.js', { 'data-goatcounter': base + '/count' });
+
+        // 页脚总数走公开计数接口。需要在 GoatCounter 后台打开
+        // Settings → 「Allow adding visitor counts on your website」，
+        // 否则接口不返回数据（页脚会一直显示 --）。结果有最多 4 小时缓存。
+        if (counter) {
+          fetch(base + '/counter/TOTAL.json')
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (j) {
+              var el = document.getElementById('gc-total');
+              if (el && j && j.count) el.textContent = j.count;
+            })
+            .catch(function () {});
+        }
+        return;
+      }
+
+      if (provider === 'cloudflare') {
+        if (!cfToken) return;
+        addScript('https://static.cloudflareinsights.com/beacon.min.js', {
+          defer: '',
+          'data-cf-beacon': JSON.stringify({ token: cfToken }),
+        });
+      }
+    })();
   </script>
 </footer>
