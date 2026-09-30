@@ -138,7 +138,7 @@ $$
 
 两件事是咬合的：**显存决定"能塞多少"，调度决定"塞得满不满"。**
 
-> 补一个容易记混的点：continuous batching 并不是 vLLM 首创，它可以追溯到 Orca 等更早的推理系统工作（2022）；vLLM 是把它和 PagedAttention 结合在一起。**vLLM 真正的核心贡献是"显存"那一半**——因为真正卡住 batch size 的，是 KV cache 的显存。
+> 补一个容易记混的点：continuous batching 并不是 vLLM 首创。Orca（OSDI '22）里提出的 iteration-level scheduling 就是这个思路，vLLM 做的是把它和 PagedAttention 结合在一起。**vLLM 真正的核心贡献是"显存"那一半**——因为真正卡住 batch size 的，是 KV cache 的显存。第 2 章会细讲。
 
 ## vLLM 内部的三个角色
 
@@ -180,5 +180,6 @@ $$
 ## 参考资料
 
 - vLLM 0.30.0 源码（后面章节会用）
+- Yu et al.，[Orca: A Distributed Serving System for Transformer-Based Generative Models](https://www.usenix.org/conference/osdi22/presentation/yu)，OSDI '22
 - Aleksa Gordić，《Inside vLLM: Anatomy of a High-Throughput LLM Inference System》，2025-09-05
 - Kwon et al.，《Efficient Memory Management for LLM Serving with PagedAttention》，SOSP 2023
