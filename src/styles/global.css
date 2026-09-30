@@ -762,6 +762,13 @@ img {
   border-radius: 12px;
 }
 
+/* 公式：独立成行的公式太宽时允许横向滚动，避免撑破布局 */
+.prose .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 0;
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 640px) {
   .site-header .container {
