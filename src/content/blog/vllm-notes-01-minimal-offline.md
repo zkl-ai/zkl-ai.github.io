@@ -30,7 +30,7 @@ print(out[0].outputs[0].text)
 
 之后的每一次，上下文里只有"前面所有 token"和"新加进来的那个 token"。前面那些 token 的结果其实已经算过了，不用重算——只需要处理最新这一个。这一步叫 **decode**。
 
-所以一次生成 = **1 次 prefill + N 次 decode**（N 是生成长度）。
+所以一次生成 = **1 次 prefill + N 次 decode**，一共产出 **N+1** 个 token——prefill 出第 1 个，之后每 decode 一次再出一个。
 
 ## KV cache：必需，但很占显存
 
