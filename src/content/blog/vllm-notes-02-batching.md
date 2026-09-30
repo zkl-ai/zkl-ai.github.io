@@ -144,6 +144,8 @@ V0 不是这样的。那一版的序列上挂着一个显式的 `SequenceStage`�
 
 V1 把两条路合成了一条。官方的说法是它 "removes the traditional distinction between 'prefill' and 'decode' phases"，不再区分用户给的 prompt token 和模型生成的 output token。理由是 V0 那些特性各自独立开发，难组合（"Features were often developed independently, making it difficult to combine them effectively and cleanly"）；而 `{request_id: num_tokens}` 这种统一表示恰好能同时表达 chunked prefill、prefix caching 和投机解码。于是 V1 干脆把混批变成默认行为——V0 里 `enable_chunked_prefill` 默认是关的（只有上下文超过 32K 的模型会自动打开），V1 则直接写死 `self.enable_chunked_prefill = True`，注释只有一句 `# V1 always uses chunked prefills.`。
 
+这里有个容易推过头的地方。"调度器里没有 prefill/decode 阶段"说的是**表示方式**，"prefill 和 decode 计算特性不同"是物理事实，两者不冲突。就在同一个文件里，请求对象上仍然有个 `is_prefill_chunk`——只不过它不是存下来的阶段，而是每次从计数器推出来的：`num_computed_tokens` 还没追上 `num_tokens`，就说明 prompt 还没算完（`scheduler.py:1538`）。P/D 分离（第 9 章）也建在这上面：一个实例是 prefill 实例还是 decode 实例，取决于启动时的 `kv_role` 配置，不是运行时的调度阶段；而跨实例传过来的 KV，对调度器来说就是"已经算好的 token"，和本地 prefix cache 命中走同一个口子（`scheduler.py:927` 那句 `# Get externally-cached tokens if using a KVConnector.`）。
+
 不过这里冒出一个新问题：一个新请求要进场，得先做 prefill；而这一步里同时还有别的请求在做 decode。prefill 是计算密集，decode 是访存密集，硬塞进同一个 step 会互相拖累。这件事留到第 9 章讲 chunked prefill 时再说。
 
 ## 还没解决的问题
