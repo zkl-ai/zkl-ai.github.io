@@ -7,8 +7,8 @@
 | 放什么 | 放哪儿 | 说明 |
 |--------|--------|------|
 | 文章 | `src/content/blog/*.md` | 平铺，不建子文件夹 |
-| 发布用的图片 | `public/images/<系列>/` | Astro 只服务 `public/` 里的静态文件 |
-| 画图源文件（Excalidraw） | `framework-study/<系列>/images/` | 不入库的参考文件放 `framework-study/sources/` |
+| 文章配图 | `src/content/blog/images/` | 和文章放一起，用**相对路径**引用（见第五节） |
+| 画图源文件（Excalidraw） | `framework-study/<系列>/images/` | 保留可编辑的源文件 |
 
 文件名 = 网址。用英文话题名，比如 `vllm-notes-01-minimal-offline.md` → `/blog/vllm-notes-01-minimal-offline/`。
 
@@ -70,11 +70,13 @@ llm = LLM(model="Qwen/Qwen3.5-0.8B")
 
 优先用 **SVG**：清晰、体积小、Excalidraw 直接导出。
 
-引用时路径以 `/` 开头（从 `public/` 起算）：
+图片放在 `src/content/blog/images/`，文章里用**相对路径**引用：
 
 ```markdown
-![图 1.1：一次生成的全过程](/images/vllm/fig-1-1-prefill-decode.svg)
+![图 1.1：一次生成的全过程](./images/fig-1-1-prefill-decode.svg)
 ```
+
+**不要用 `/images/...` 这种以斜杠开头的写法。** 它在线上能访问（Astro 从 `public/` 起算），但在 MarkText 里会指向**文件系统根目录**，本地必然打不开。相对路径两边都认：MarkText 相对 md 文件找，Astro 把它当内容资源处理并输出到 `/_astro/`。
 
 配图流程：先给一张 **ASCII 草图**定版面，再列元素清单和配色，然后照着画。只给文字描述容易让人"没概念"。
 
@@ -136,8 +138,9 @@ git add . && git commit -m "..." && git push
 |----|------|---------|
 | 公式写在同一行 | 渲染成行内，不居中 | `$$` 独占一行 |
 | 用代码块包公式 | 原样输出，不渲染 | 直接用 LaTeX |
+| 数学变量用反引号 | 渲染成代码，不是公式 | 用 `$...$` |
 | 链接指向草稿章节 | 线上 404 | 只链已发布的 |
 | 文章放在 `framework-study/` | 不上线 | 必须放 `src/content/blog/` |
-| 图片放在 `framework-study/` | 线上不显示 | 必须放 `public/`，路径以 `/` 开头 |
-| 数量/因果/数据三类错误 | 只看结论发现不了 | 自己推一遍，见第七节 |
+| 图片放 `public/` 并用 `/...` 引用 | 线上正常，MarkText 里打不开（`/` 指向文件系统根） | 放 `src/content/blog/images/`，用相对路径 `./images/...` |
+| 数量／因果／数据三类错误 | 只看结论发现不了 | 自己推一遍，见第七节 |
 | git 里中文文件名 | 提交信息显示成转义码 | 无碍，功能正常 |
