@@ -7,7 +7,7 @@
 | 放什么 | 放哪儿 | 说明 |
 |--------|--------|------|
 | 文章 | `src/content/blog/*.md` | 平铺，不建子文件夹 |
-| 文章配图 | `src/content/blog/images/` | 和文章放一起，用**相对路径**引用（见第五节） |
+| 文章配图 | `src/content/blog/images/<文章文件名>/` | 每篇文章一个子目录，用**相对路径**引用（见第五节） |
 | 画图源文件（Excalidraw） | `framework-study/<系列>/images/` | 保留可编辑的源文件 |
 
 文件名 = 网址。用英文话题名，比如 `vllm-notes-01-minimal-offline.md` → `/blog/vllm-notes-01-minimal-offline/`。
@@ -70,10 +70,10 @@ llm = LLM(model="Qwen/Qwen3.5-0.8B")
 
 优先用 **SVG**：清晰、体积小、Excalidraw 直接导出。
 
-图片放在 `src/content/blog/images/`，文章里用**相对路径**引用：
+图片放在 `src/content/blog/images/<文章文件名>/` 下——**每篇文章一个子目录**，这样不同文章的图不会重名。文章里用**相对路径**引用：
 
 ```markdown
-![图 1.1：一次生成的全过程](./images/fig-1-1-prefill-decode.svg)
+![图 1.1：一次生成的全过程](./images/vllm-notes-01-minimal-offline/fig-1-1-prefill-decode.svg)
 ```
 
 **不要用 `/images/...` 这种以斜杠开头的写法。** 它在线上能访问（Astro 从 `public/` 起算），但在 MarkText 里会指向**文件系统根目录**，本地必然打不开。相对路径两边都认：MarkText 相对 md 文件找，Astro 把它当内容资源处理并输出到 `/_astro/`。
