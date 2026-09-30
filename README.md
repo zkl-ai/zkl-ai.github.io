@@ -109,6 +109,8 @@ git push -u origin main
 
 ### 写新博客
 
+> 写之前先读 [BLOG_GUIDE.md](BLOG_GUIDE.md)（博客写作手册）：公式、图片、语气、发布前检查清单都在里面，能避开大部分已经踩过的坑。
+
 在 `src/content/blog/` 下新建一个 `.md` 文件，顶部按下面格式写 frontmatter：
 
 ```md
