@@ -138,7 +138,7 @@ $$
 
 两件事是咬合的：**显存决定"能塞多少"，调度决定"塞得满不满"。**
 
-> 补一个容易记混的点：continuous batching 并不是 vLLM 首创。Orca（OSDI '22）里提出的 iteration-level scheduling 就是这个思路，vLLM 做的是把它和 PagedAttention 结合在一起。**vLLM 真正的核心贡献是"显存"那一半**——因为真正卡住 batch size 的，是 KV cache 的显存。第 2 章会细讲。
+> 补一个容易记混的点：continuous batching 并不是 vLLM 首创。Orca（OSDI '22）里提出的 iteration-level scheduling 就是这个思路，vLLM 做的是把它和 PagedAttention 结合在一起。**vLLM 真正的核心贡献是"显存"那一半**——因为真正卡住 batch size 的，是 KV cache 的显存。[第 2 章](/blog/vllm-notes-02-batching/)会细讲。
 
 ## vLLM 内部的三个角色
 

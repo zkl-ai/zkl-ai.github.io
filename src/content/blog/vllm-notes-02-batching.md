@@ -4,7 +4,6 @@ description: "把长度不齐的请求拼进一次前向，以及静态批处理
 pubDate: 2026-09-30
 tags: ["vLLM", "推理加速", "源码笔记"]
 category: inference-acceleration
-draft: true
 ---
 
 上一章最后算了一笔账：单请求 decode 的算术强度只有 1 FLOP/字节，而 H100 的平衡点在 300 FLOP/字节附近。差 300 倍的意思是，它绝大部分时间在等显存把权重送过来，计算单元干等着。
