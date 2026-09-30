@@ -2,10 +2,11 @@
 import Base from '../layouts/Base.astro';
 import Resume from '../components/Resume.astro';
 import { resume } from '../data/resume';
+import { personSchema } from '../lib/schema';
 
 const d = resume.zh;
 ---
 
-<Base lang="zh" description={d.metaDescription}>
+<Base lang="zh" description={d.metaDescription} structuredData={personSchema()}>
   <Resume lang="zh" />
 </Base>
