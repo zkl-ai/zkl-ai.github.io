@@ -769,6 +769,25 @@ img {
   padding: 2px 0;
 }
 
+/* 表格：加边框，否则纯文字很难对齐阅读 */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14.5px;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.prose th {
+  background: var(--bg-subtle);
+  font-weight: 700;
+}
+
 /* ---------- 响应式 ---------- */
 @media (max-width: 640px) {
   .site-header .container {
