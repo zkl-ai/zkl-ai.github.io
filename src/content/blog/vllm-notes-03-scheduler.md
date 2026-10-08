@@ -206,7 +206,7 @@ recompute 的代价随 prompt 长度线性涨——这正是后面要做 prefix 
 
 调度器现在会做决定了，但它依赖一个前提：**得知道显存还剩多少、还能不能给这条请求分配块。** 这个"能不能"是谁回答的？块又是怎么组织的、为什么会不够？
 
-这两个问题指向同一个组件：KV cache 管理器。下一章看 PagedAttention 到底在管什么。
+这两个问题指向同一个组件：KV cache 管理器。[下一章](/blog/vllm-notes-04-pagedattention/)看 PagedAttention 到底在管什么。
 
 ## 参考资料
 

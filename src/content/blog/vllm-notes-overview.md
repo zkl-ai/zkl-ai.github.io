@@ -25,7 +25,7 @@ vLLM 0.30.0 在 PyPI 上只有 manylinux 的 wheel，没有 macOS 版本；在 A
 1. [最小的离线示例](/blog/vllm-notes-01-minimal-offline/) —— 一次生成到底发生了什么
 2. [从单请求到批处理](/blog/vllm-notes-02-batching/) —— 为什么 GPU 不能一个一个来
 3. [调度器](/blog/vllm-notes-03-scheduler/) —— 谁先跑、显存不够怎么办
-4. PagedAttention —— 显存怎么分页管
+4. [PagedAttention](/blog/vllm-notes-04-pagedattention/) —— 显存怎么分页管
 
 **第二篇 · 深入源码**
 
