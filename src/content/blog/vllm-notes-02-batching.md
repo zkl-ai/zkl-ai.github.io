@@ -134,9 +134,11 @@ A 在第 2 步结束时腾出槽位，D 第 3 步就进来了；B 第 3 步腾�
 
 > There's no "decoding phase" nor "prefill phase" in the scheduler. Each request just has the `num_computed_tokens` and `num_tokens_with_spec`. ... At each step, the scheduler tries to assign tokens to the requests so that each request's `num_computed_tokens` can catch up its `num_tokens_with_spec`.
 
-调度器里没有"decode 阶段"也没有"prefill 阶段"。每个请求身上只有两个数：已经算了多少 token、一共需要算多少 token。每一步调度器做的事，就是给请求分一点 token 配额，让前者追上后者。这正是连续批处理的思路——**不按阶段想问题，只按步想问题**。
+调度器里没有"decode 阶段"也没有"prefill 阶段"。每个请求身上只有两个数：有多少 token 已经排进前向、已知的 token 一共多少。每一步调度器做的事，就是给请求分一点 token 配额，让前者追上后者。这正是连续批处理的思路——**不按阶段想问题，只按步想问题**。
 
-这两个变量名值得单独记一下，因为它们和"阶段"是一回事的两面说法。`num_computed_tokens` 是"这个请求已经算过多少 token"；`num_tokens_with_spec` 是"它一共有多少 token"——prompt 加已生成的部分，再加上投机解码草拟出来、还没验证的那些。`request.py:292` 的定义就是 `len(self._all_token_ids) + len(self.spec_token_ids)`，名字里的 `spec` 是 speculative 的缩写。两者之差，就是这一步还欠它多少 token。
+这两个变量名值得单独记一下，因为它们和"阶段"是一回事的两面说法。`num_computed_tokens` 是"这个请求有多少 token **已经排进前向**"（注意是"已排进"不是"已算完"）；`num_tokens_with_spec` 是"它**已知**多少 token"——prompt 加已返回的输出，再加上投机解码草拟出来、还没验证的那些。`request.py:292` 的定义就是 `len(self._all_token_ids) + len(self.spec_token_ids)`，名字里的 `spec` 是 speculative 的缩写。两者的差，就是这一步还欠它多少 token。
+
+这个差具体怎么算、为什么公式里还多出两项修正，[第 3 章](/blog/vllm-notes-03-scheduler/)开头把源码摊开讲了。
 
 `schedule()` 内部的顺序也照着这个来。先是第 610 行一句 `# First, schedule the RUNNING requests.`，把已经在跑的请求续上；接着是第 854 行 `# Next, schedule the WAITING requests.`，再回头看排队的能不能补进空出来的位置。请求跑完之后由 `_free_request`（第 2561 行）收尾，KV cache 的块跟着回收，下一次 `schedule()` 就能把这些位置分给别人。
 

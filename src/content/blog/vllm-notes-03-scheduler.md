@@ -21,11 +21,101 @@ num_new_tokens = (
 )
 ```
 
-一个请求想要多少 token？**它欠多少就要多少。** decode 请求欠 1 个（开了投机解码时欠 1+k 个），一条刚进来的 20000 token 长 prompt 就欠 20000 个。（`num_output_placeholders` 是投机解码和异步调度下已经预留、还没落地的输出位置，普通情况是 0。）
+要读懂它，得先把两个很容易混的量分开：
 
-然后这个数会被削一刀——源码紧接着就是 `min(num_new_tokens, token_budget, ...)`：**预算剩多少，就只能给多少**。
+- **`num_tokens`——"已知"**：prompt 加上已经返回的输出。注意 prompt 只要你提交了就算已知（`request.py:148` 把它整个拷进 `_all_token_ids`），所以它从第一刻起就是完整的 prompt 长度，哪怕一个 token 都还没算。
+- **`num_computed_tokens`——"已排进前向"**：已经排进过前向、KV 有着落的 token 数。注意是"已排进"而不是"已算完"——`scheduler.py:1533` 是在**调度的时候**加它的，因为异步调度和 PP 下 GPU 跑在前面，等结果回来再加就晚了。`request.py:168` 那段注释管这叫 "counts them optimistically"。
 
-**这就是 chunked prefill 的全部秘密。** 框架里没有为长 prompt 写什么特殊逻辑，只是"它想要 20000，我只给得起 7992"。第 9 章会细讲它的副作用，但机制在这里就已经说完了。
+**一个请求想要多少 token？已知的减去已排进前向的——它欠多少就要多少。**
+
+拿第 1 章那组例子走一遍（prompt 是 A B C，生成 D E F G）：
+
+| 时刻 | `num_tokens` | `num_computed_tokens` | 差 |
+|---|---|---|---|
+| 刚提交 | 3 | 0 | 3 → 整个 prompt 一次 prefill |
+| 算出 prefill、采样出 D | 4 | 3 | 1 |
+| 算出 D、采样出 E | 5 | 4 | 1 |
+| 算出 E、采样出 F | 6 | 5 | 1 |
+
+**decode 阶段这个差恒等于 1**：每算掉一个 token 的 KV，同时又生成一个新 token，账一直欠着。所以 decode 的本质是"**一直欠 1 个 token 的 KV**"——这比"每步算一个 token"准确，因为它顺带说明了为什么不存在"欠 0 个"的稳定状态。
+
+长 prompt 那边，两个量能差得很远：
+
+| 步骤 | `num_tokens` | `num_computed_tokens` | 差 |
+|---|---|---|---|
+| 初始 | 20000 | 0 | 20000 |
+| 第 1 块后 | 20000 | 7992 | 12008 |
+| 第 2 块后 | 20000 | 15984 | 4016 |
+| 第 3 块后 | 20001 | 20000 | 1 |
+
+中间几块 `num_tokens` 一直不动——**因为 prompt 还没算完，采样不出任何输出 token**。
+
+有了这两个量，"它想要多少"就清楚了：把欠的一次补齐。然后这个数会被削一刀——源码紧接着就是 `min(num_new_tokens, token_budget, ...)`：**预算剩多少，就只能给多少**。
+
+**这就是 chunked prefill 的全部秘密。** 框架里没有为长 prompt 写什么特殊逻辑，只是"它想要 20000，我只给得起 7992"。
+
+## 公式里多出来的两项
+
+既然是"已知减已算"，为什么公式里还多两项？
+
+因为**两个边都得先修正到同一个口径**，否则会算出负数。看这个瞬间：
+
+| 量 | 值 | 原因 |
+|---|---|---|
+| `num_tokens` | 5 | prompt 3 + 已返回的输出 2 |
+| `num_output_placeholders` | 1 | 异步调度已经为下一步占了 1 个输出位置，id 还没回来 |
+| `num_computed_tokens` | 6 | 而那个占位位置**已经排进前向**了 |
+
+直接减是 $5 - 6 = -1$，荒谬。加上修正项：$5 + 1 - 6 = 0$——合理，已经有一个在飞了，这一步不用再排。
+
+- **`+ len(spec_token_ids)`**：投机解码的草稿不在 `_all_token_ids` 里（它们还没被接受），但投机解码本来就要把 k+1 个位置一次前向全算掉再统一验证，所以它们是**真要算的工作**。
+- **`+ num_output_placeholders`**：就是上面那个例子。它是**异步调度**专用的（`request.py:159` 的注释只有一句 `# Used in async scheduling.`），调度时加、输出回来时减（`async_scheduler.py:39` / `:62`）；基类 `scheduler.py` 里只有减和清零，**增量只存在于 `async_scheduler.py`**。
+
+有一处细节挺漂亮：这个差分本身很稳。调度时两边一起加，输出回来时 `num_tokens` 加、`placeholders` 减，草稿被拒时**两边一起减**（`scheduler.py:1993`）。同增同减，所以公式不需要给投机解码写任何特例——第 2 章那句"这个表示足够通用"，代码版就在这里。
+
+**而在最常见的场景下（不开投机解码、不开异步调度），两个修正项都是 0**，公式就退化成纯粹的减法 `num_tokens − num_computed_tokens`。
+
+## 那 max_tokens 呢
+
+读完公式很容易追问：设了 `max_tokens` 是不是要跟着调整？**不用。** 公式算的是"已知但还没算 KV 的"，`max_tokens` 限制的是"还要新生成多少"——一个是欠账，一个是未来额度。而且这个公式天然只会算出 1（投机解码下是 1+k），永远不会因为"`max_tokens` 还剩 100 个"就一次要 100 个：那 100 个 token 根本还不存在。
+
+更能说明问题的是这个对比——**`max_model_len` 反而真的进了公式**（`scheduler.py:667`）：
+
+```python
+# Make sure the input position does not exceed the max model len.
+num_new_tokens = min(
+    num_new_tokens,
+    self.max_model_len
+    - request.num_computed_tokens
+    - self.num_sampled_tokens_per_step,
+)
+```
+
+区别在于：`max_model_len` 约束的是**位置**——"这次前向最多算到第几个位置"，这是能对单步施加的现实上限；`max_tokens` 约束的是**输出个数**，它不影响任何单步能算多少 token。**能预算的才进公式，只作终止条件的用别的方式处理。**
+
+`max_tokens` 的生效方式是"每生成一个 token 就判一次"。判定在 `vllm/v1/core/sched/utils.py` 的 `check_stop()` 里：
+
+```python
+if (
+    request.num_tokens >= max_model_len
+    or request.num_output_tokens >= request.max_tokens
+):
+    request.status = RequestStatus.FINISHED_LENGTH_CAPPED
+    return True
+```
+
+调用点在 `scheduler.py:2347`，而且是**每 append 一个 token 就调一次**：
+
+```python
+for num_new, output_token_id in enumerate(new_token_ids, 1):
+    request.append_output_token_ids(output_token_id)
+    stopped = check_stop(request, self.max_model_len)
+    if stopped:
+        del new_token_ids[num_new:]   # Trim new tokens if needed.
+        break
+```
+
+所以是"生成 → 立即判定 → 越界就停"，不会白算下一步。唯一会真浪费的是投机解码：一步回来 1+k 个 token，如果第 3 个就把 `max_tokens` 打满，后面验证通过的草稿会被那个 `del` 丢掉——那部分算力是真丢了。细节留到第 9 章。
 
 ## 预算：不是"能跑几个请求"，而是"能算多少 token"
 
