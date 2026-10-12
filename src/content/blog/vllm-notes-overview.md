@@ -29,7 +29,7 @@ vLLM 0.30.0 在 PyPI 上只有 manylinux 的 wheel，没有 macOS 版本；在 A
 
 **第二篇 · 深入源码**
 
-5. 引擎骨架与源码地图 —— 分层结构、请求状态机
+5. [引擎骨架与源码地图](/blog/vllm-notes-05-engine-skeleton/) —— 分层结构、请求状态机
 6. 引擎初始化 —— KV block 的数量是怎么算出来的
 7. 前向传播 —— 扁平序列 + paged kernel
 
