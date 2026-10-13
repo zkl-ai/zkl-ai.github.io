@@ -123,7 +123,7 @@ def is_finished(status: "RequestStatus") -> bool:
 
 ## 下一章看什么
 
-骨架有了，接下来钻进 `LLM(...)` 的构造函数。里面是一条链：`init_device` → `load_model` → `determine_available_memory` → `initialize_from_config`。
+骨架有了，[下一章](/blog/vllm-notes-06-engine-init/)钻进 `LLM(...)` 的构造函数。里面是一条链：`init_device` → `load_model` → `determine_available_memory` → `initialize_from_config`。
 
 其中 `determine_available_memory` 是关键的一环——**KV cache 能开多少个 block，就是在这一步算出来的**。而它直接决定了这台机器最多能同时服务多少请求，也就决定了第 2 章那个 batch size 的上限。
 
